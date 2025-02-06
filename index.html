@@ -1,148 +1,163 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Heart Particle Animation with Fireworks</title>
-  <style>
-    body {
-      margin: 0;
-      background-color: black;
-      overflow: hidden;
-    }
-    canvas {
-      display: block;
-    }
-  </style>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { position: fixed; top: 0; left: 0; }
+        #text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-family: 'Arial';
+            text-align: center;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            opacity: 0;
+        }
+    </style>
 </head>
 <body>
-  <canvas id="heartCanvas"></canvas>
+    <div id="text">"我们终在雨中失散"</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
 
-  <script>
-    const canvas = document.getElementById('heartCanvas');
-    const ctx = canvas.getContext('2d');
+<script>
+let scene, camera, renderer, car;
+const rainDrops = [];
+const neonColors = [0x4A90E2, 0x50E3C2, 0xBD10E0];
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+init();
+animate();
 
-    const CANVAS_CENTER_X = canvas.width / 2;
-    const CANVAS_CENTER_Y = canvas.height / 2;
-    const HEART_COLOR = '#FF69B4';
-    const PARTICLE_COUNT = 5000;
-    const FIREWORK_COLOR = ['#FF5733', '#FFD700', '#00FF7F', '#1E90FF', '#FF69B4'];
-    const MAX_FIREWORKS = 10;
-    let pulse = 1;
-    let direction = 1;
+function init() {
+    // 场景设置
+    scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x1a1a1a, 1, 1000);
 
-    function heartFunction(t, shrinkRatio) {
-      const x = 16 * Math.pow(Math.sin(t), 3) * shrinkRatio + CANVAS_CENTER_X;
-      const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * shrinkRatio + CANVAS_CENTER_Y;
-      return { x, y };
-    }
+    // 潮湿路面材质
+    const roadTexture = new THREE.TextureLoader().load('https://picsum.photos/1024/1024?grayscale');
+    const road = new THREE.Mesh(
+        new THREE.PlaneGeometry(2000, 200),
+        new THREE.MeshStandardMaterial({ 
+            map: roadTexture,
+            roughness: 0.1,
+            metalness: 0.8
+        })
+    );
+    road.rotation.x = -Math.PI / 2;
+    scene.add(road);
 
-    function scatterInside(x, y, beta = 0.12) {
-      const ratioX = -beta * Math.log(Math.random());
-      const ratioY = -beta * Math.log(Math.random());
-      const dx = ratioX * (x - CANVAS_CENTER_X);
-      const dy = ratioY * (y - CANVAS_CENTER_Y);
-      return { x: x - dx, y: y - dy };
-    }
-
-    function createParticles() {
-      let particles = [];
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        let t = Math.random() * Math.PI * 2;
-        let { x, y } = heartFunction(t, pulse * 12);
-        let { x: scatterX, y: scatterY } = scatterInside(x, y);
-        particles.push({ x: scatterX, y: scatterY, size: Math.random() * 2 + 1 });
-      }
-      return particles;
-    }
-
-    let particles = createParticles();
-
-    // Firework system
-    let fireworks = [];
-
-    function createFirework() {
-      const x = Math.random() * canvas.width;
-      const y = Math.random() * canvas.height / 2; // Top half of the screen
-      const color = FIREWORK_COLOR[Math.floor(Math.random() * FIREWORK_COLOR.length)];
-      const fireworkParticles = [];
-      for (let i = 0; i < 100; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 3 + 2;
-        fireworkParticles.push({
-          x,
-          y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          alpha: 1,
-          size: Math.random() * 2 + 1,
-          color,
-        });
-      }
-      fireworks.push(fireworkParticles);
-    }
-
-    function updateFireworks() {
-      fireworks.forEach((firework, index) => {
-        firework.forEach(p => {
-          p.x += p.vx;
-          p.y += p.vy;
-          p.alpha -= 0.02;
-        });
-        // Remove faded fireworks
-        if (firework.every(p => p.alpha <= 0)) {
-          fireworks.splice(index, 1);
-        }
-      });
-    }
-
-    function drawFireworks() {
-      fireworks.forEach(firework => {
-        firework.forEach(p => {
-          ctx.globalAlpha = p.alpha;
-          ctx.fillStyle = p.color;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-          ctx.fill();
-        });
-      });
-      ctx.globalAlpha = 1;
-    }
-
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Draw heart particles
-      particles.forEach(p => {
-        ctx.fillStyle = HEART_COLOR;
-        ctx.fillRect(p.x, p.y, p.size, p.size);
-      });
-
-      // Update heart pulse
-      pulse += direction * 0.01;
-      if (pulse > 1.2 || pulse < 0.8) direction *= -1;
-      particles = createParticles();
-
-      // Fireworks
-      if (fireworks.length < MAX_FIREWORKS && Math.random() < 0.05) {
-        createFirework();
-      }
-      updateFireworks();
-      drawFireworks();
-
-      requestAnimationFrame(animate);
-    }
-
-    animate();
-
-    window.addEventListener('resize', () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      particles = createParticles();
+    // 车辆模型（简化版迈巴赫）
+    const carGeometry = new THREE.BoxGeometry(4, 1.5, 8);
+    const carMaterial = new THREE.MeshPhysicalMaterial({
+        color: 0x111111,
+        metalness: 0.9,
+        roughness: 0.1
     });
-  </script>
+    car = new THREE.Mesh(carGeometry, carMaterial);
+    car.position.set(0, 1, -50);
+    scene.add(car);
+
+    // 车灯效果
+    const headlight = new THREE.SpotLight(0xffffff, 2);
+    headlight.position.set(0, 2, -4);
+    car.add(headlight);
+
+    // 霓虹高架桥
+    for(let i = 0; i < 50; i++) {
+        const pillar = new THREE.Mesh(
+            new THREE.BoxGeometry(0.5, 30, 0.5),
+            new THREE.MeshBasicMaterial({ 
+                color: neonColors[Math.floor(Math.random()*3)],
+                transparent: true,
+                opacity: 0.3
+            })
+        );
+        pillar.position.set(Math.random()*200-100, -15, i*50 - 500);
+        scene.add(pillar);
+    }
+
+    // 雨水粒子
+    const rainGeometry = new THREE.BufferGeometry();
+    const positions = [];
+    for(let i = 0; i < 5000; i++) {
+        positions.push(
+            Math.random() * 400 - 200,
+            Math.random() * 300,
+            Math.random() * 1000 - 500
+        );
+    }
+    rainGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    const rainMaterial = new THREE.PointsMaterial({
+        color: 0xAAAAAA,
+        size: 0.1,
+        transparent: true
+    });
+    const rain = new THREE.Points(rainGeometry, rainMaterial);
+    scene.add(rain);
+
+    // 摄像机设置
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 10, 0);
+
+    // 渲染器
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x0a0a1a);
+    document.body.appendChild(renderer.domElement);
+
+    // 镜头动画
+    gsap.to(car.position, {
+        z: 500,
+        duration: 15,
+        ease: "power2.inOut",
+        repeat: -1
+    });
+
+    // 文字动画
+    gsap.to("#text", {
+        opacity: 1,
+        duration: 2,
+        repeat: 3,
+        yoyo: true,
+        delay: 3
+    });
+
+    // 添加镜头光晕
+    const lensFlare = new THREE.LensFlare();
+    lensFlare.addElement(new THREE.LensFlareElement(headlight, 100, 0, headlight.color));
+    scene.add(lensFlare);
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    // 雨水动画
+    const positions = scene.children[3].geometry.attributes.position.array;
+    for(let i = 0; i < positions.length; i += 3) {
+        positions[i+1] -= 2;
+        if(positions[i+1] < -50) positions[i+1] = 200;
+    }
+    scene.children[3].geometry.attributes.position.needsUpdate = true;
+
+    // 动态模糊效果
+    camera.position.x = Math.sin(Date.now()*0.001)*0.5;
+    camera.position.y = 10 + Math.cos(Date.now()*0.0015)*0.3;
+
+    // 车灯闪烁
+    car.children[0].intensity = 2 + Math.random()*0.5;
+
+    renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+
+<!-- 推荐搭配音乐：Ludovico Einaudi - Experience（高潮部分） -->
 </body>
 </html>
