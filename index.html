@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>条例自学测验</title>
-  <link rel="stylesheet" href="style.css" />
   <style>
     body {
       font-family: "Microsoft YaHei", sans-serif;
@@ -60,10 +59,15 @@
     button:hover {
       background: #0056b3;
     }
+    #progress {
+      margin-bottom: 10px;
+      color: #555;
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <div id="progress"></div>
     <h2 id="question">正在加载题目...</h2>
     <div id="options"></div>
     <button id="submitBtn">提交</button>
