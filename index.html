@@ -1,48 +1,73 @@
-<!doctype html>
-<html lang="zh-CN">
+<!DOCTYPE html>
+<html lang="zh">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>条例题库在线答题</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>条例自学测验</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: "Microsoft YaHei", sans-serif;
+      background: #f2f5f9;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      font-size: 20px;
+      color: #333;
+      line-height: 1.6;
+    }
+    .option {
+      display: block;
+      background: #f9f9f9;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .option:hover {
+      background: #eaf3ff;
+      border-color: #3399ff;
+    }
+    .selected {
+      background: #d8e9ff;
+      border-color: #007bff;
+    }
+    #result {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    button {
+      background: #007bff;
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
 </head>
 <body>
-  <div id="app" class="container">
-    <header>
-      <h1>《纪律处分条例》知识测试</h1>
-      <div id="info"></div>
-    </header>
-
-    <main id="quiz-area">
-      <div id="start-screen">
-        <button id="start-btn">开始随机组卷（手机友好）</button>
-      </div>
-
-      <div id="question-screen" class="hidden">
-        <div id="progress"></div>
-        <div id="question-card">
-          <div id="q-text"></div>
-          <div id="options"></div>
-          <div id="tf-options" class="hidden">
-            <button class="choice-btn" data-val="正确">正确</button>
-            <button class="choice-btn" data-val="错误">错误</button>
-          </div>
-        </div>
-        <div id="nav">
-          <button id="next-btn">下一题</button>
-        </div>
-      </div>
-
-      <div id="result-screen" class="hidden">
-        <h2>考试结果</h2>
-        <div id="result"></div>
-        <button id="retry-btn">再来一套</button>
-      </div>
-    </main>
-
-    <footer>
-      <small>本页为练习用途，题库来源：题库 JSON</small>
-    </footer>
+  <div class="container">
+    <h2 id="question">正在加载题目...</h2>
+    <div id="options"></div>
+    <button id="submitBtn">提交</button>
+    <div id="result"></div>
   </div>
 
   <script src="app.js"></script>
