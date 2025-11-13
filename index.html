@@ -33,7 +33,7 @@
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s ease;
-      color: #222; /* ✅ 字体颜色固定为深灰色 */
+      color: #222;
     }
     .option:hover {
       background: #eaf3ff;
@@ -65,6 +65,10 @@
       margin-bottom: 10px;
       color: #666;
     }
+    .center {
+      text-align: center;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -72,7 +76,10 @@
     <div id="progress"></div>
     <h2 id="question">正在加载题目...</h2>
     <div id="options"></div>
-    <button id="submitBtn">提交</button>
+    <div class="center">
+      <button id="submitBtn">提交</button>
+      <button id="restartBtn" style="display:none;">再来一套</button>
+    </div>
     <div id="result"></div>
   </div>
 
