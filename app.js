@@ -34,13 +34,6 @@ function generateNewSet() {
   const multi = getRandomSubset(allQuestions.multiple_choice || [], 10);
   const judge = getRandomSubset(allQuestions.true_false || [], 10);
 
-  // 为判断题自动添加选项（如果没有提供）
-  judge.forEach(q => {
-    if (!q.options || q.options.length === 0) {
-      q.options = ["A. 正确", "B. 错误"];
-    }
-  });
-
   questions = [...single, ...multi, ...judge].sort(() => Math.random() - 0.5);
 
   document.getElementById('restartBtn').style.display = 'none';
@@ -144,7 +137,6 @@ document.getElementById('submitBtn').addEventListener('click', () => {
     }
   });
 
-  // 自动切换下一题
   setTimeout(nextQuestion, 1500);
 });
 
