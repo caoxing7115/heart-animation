@@ -1,88 +1,542 @@
-<!DOCTYPE html>
-<html lang="zh">
+<!doctype html>
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>条例自学测验</title>
+  <meta charset="utf-8" />
+  <title>手势控制的 3D 圣诞树（Three.js + MediaPipe Hands）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      font-family: "Microsoft YaHei", sans-serif;
-      background: #f0f3f8;
-      margin: 0;
-      padding: 20px;
+    :root{
+      --matte-green: #245b2f;
+      --metal-gold: #cba33b;
+      --christmas-red: #b21f2d;
+      --bg-dark: #07110b;
     }
-    .container {
-      max-width: 700px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 25px 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;overflow:hidden;background: radial-gradient(circle at 20% 10%, rgba(36,91,47,0.18), transparent 20%), linear-gradient(180deg, #071118 0%, #04100b 60%);}
+    #ui {
+      position: absolute; right: 14px; top: 14px; z-index: 40;
+      display:flex; flex-direction:column; gap:8px; align-items:flex-end;
     }
-    h2 {
-      font-size: 20px;
-      color: #333;
-      line-height: 1.6;
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.06));
+      border: 1px solid rgba(255,255,255,0.04);
+      padding:10px 12px; border-radius:10px; color:#fff; backdrop-filter: blur(6px);
+      box-shadow: 0 6px 28px rgba(2,4,2,0.6);
+      width: 220px;
     }
-    .option {
-      display: block;
-      background: #f9f9f9;
-      border: 1px solid #ccc;
-      padding: 10px 14px;
-      margin: 8px 0;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      color: #222;
+    .panel h4{margin:0 0 6px 0; font-size:13px; color:var(--metal-gold)}
+    .controls {display:flex; gap:8px; flex-wrap:wrap;}
+    .btn{
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.04); color:#fff; padding:6px 8px; border-radius:8px; font-size:13px;
+      cursor:pointer;
     }
-    .option:hover {
-      background: #eaf3ff;
-      border-color: #3399ff;
+    #upload{display:block; width:100%;}
+    #hint{
+      position:absolute; left:14px; bottom:14px; color:rgba(255,255,255,0.8); font-size:13px; background:transparent; z-index:40;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.8);
     }
-    .selected {
-      background: #d8e9ff;
-      border-color: #007bff;
-    }
-    #result {
-      margin-top: 15px;
-      font-weight: bold;
-      font-size: 16px;
-      color: #333;
-    }
-    button {
-      background: #007bff;
-      color: #fff;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    #progress {
-      margin-bottom: 10px;
-      color: #666;
-    }
-    .center {
-      text-align: center;
-      margin-top: 20px;
-    }
+    #canvas-container{width:100%;height:100%;}
+    /* 小徽章 */
+    .badge{display:inline-block;padding:6px 8px;border-radius:999px;background:linear-gradient(180deg,rgba(203,163,59,0.14),rgba(203,163,59,0.06)); color:var(--metal-gold); font-weight:600; font-size:12px;}
+    /* 蒙层用于调试/提示 */
+    #webcamPreview{position:absolute; left:14px; top:14px; width:160px; height:120px; border-radius:8px; overflow:hidden; z-index:30; box-shadow: 0 10px 30px rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.03); display:none;}
+    #webcamPreview video{width:100%;height:100%;object-fit:cover; transform:scaleX(-1);}
   </style>
 </head>
 <body>
-  <div class="container">
-    <div id="progress"></div>
-    <h2 id="question">正在加载题目...</h2>
-    <div id="options"></div>
-    <div class="center">
-      <button id="submitBtn">提交</button>
-      <button id="restartBtn" style="display:none;">再来一套</button>
+  <div id="canvas-container"></div>
+
+  <div id="ui">
+    <div class="panel">
+      <h4><span class="badge">圣诞树 · Gesture Tree</span></h4>
+      <div style="font-size:12px;color:#ddd;margin-bottom:8px">上传照片（会作为照片云）</div>
+      <input id="upload" type="file" accept="image/*" multiple />
+      <div style="height:8px"></div>
+      <div class="controls">
+        <button id="btnConverge" class="btn">合拢态</button>
+        <button id="btnScatter" class="btn">散开态</button>
+        <button id="btnResetCam" class="btn">重置视角</button>
+      </div>
     </div>
-    <div id="result"></div>
   </div>
 
-  <script src="app.js"></script>
+  <div id="hint">
+    手势：握拳→合拢，五指张开→散开；捏（拇指+食指靠近）抓取并放大照片。摄像头需授权。
+  </div>
+
+  <!-- 可选摄像头预览（调试时打开） -->
+  <div id="webcamPreview"><video id="webcamVideo" autoplay muted playsinline></video></div>
+
+  <!-- MediaPipe（非模块，全局） -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+  <!-- Three.js 模块导入 -->
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js';
+    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js';
+    import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/UnrealBloomPass.js';
+
+    // ---------- 基本场景 ----------
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    container.appendChild(renderer.domElement);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 2.6, 12);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.enablePan = false;
+    controls.minDistance = 6;
+    controls.maxDistance = 30;
+    controls.enabled = false; // 手势控制为主
+
+    // 后期辉光（UnrealBloom）
+    const composer = new EffectComposer(renderer);
+    const renderPass = new RenderPass(scene, camera);
+    composer.addPass(renderPass);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.9, 0.6, 0.9);
+    bloomPass.threshold = 0.1;
+    bloomPass.strength = 0.9;
+    bloomPass.radius = 0.8;
+    composer.addPass(bloomPass);
+
+    // 环境
+    scene.background = null;
+    const hemi = new THREE.HemisphereLight(0x334433, 0x0b0b0b, 0.45);
+    scene.add(hemi);
+    const dir = new THREE.DirectionalLight(0xfff1d5, 0.9);
+    dir.position.set(5,10,2);
+    scene.add(dir);
+
+    // 地面轻微反射/阴影平面（仅视觉）
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(200,200),
+      new THREE.MeshStandardMaterial({color: '#051107', metalness:0.1, roughness:0.9})
+    );
+    ground.rotation.x = -Math.PI/2;
+    ground.position.y = -6;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // ---------- 元素池与状态管理 ----------
+    const ELEMENT_COUNT = 180; // 包含球、方块、糖果棍（实例化）
+    const photoPlanes = []; // 照片单独网格（支持不同贴图）
+    const instancedGroup = new THREE.Group();
+    scene.add(instancedGroup);
+
+    // Instanced meshes：球（装饰）、方块、糖果棒（长圆柱）
+    const sphereGeo = new THREE.SphereGeometry(0.18, 12, 12);
+    const cubeGeo = new THREE.BoxGeometry(0.28,0.28,0.28);
+    const candyGeo = new THREE.CylinderGeometry(0.06,0.06,1.0,12);
+
+    const matBall = new THREE.MeshStandardMaterial({color:0x6bbf6b, roughness:0.6, metalness:0.15});
+    const matCube = new THREE.MeshStandardMaterial({color:0xb22a2a, roughness:0.4, metalness:0.25});
+    const matCandy = new THREE.MeshStandardMaterial({color:0xcba33b, roughness:0.3, metalness:0.8, emissive:0x442800, emissiveIntensity:0.2});
+
+    const balls = new THREE.InstancedMesh(sphereGeo, matBall, ELEMENT_COUNT);
+    const cubes = new THREE.InstancedMesh(cubeGeo, matCube, Math.floor(ELEMENT_COUNT*0.5));
+    const candies = new THREE.InstancedMesh(candyGeo, matCandy, Math.floor(ELEMENT_COUNT*0.3));
+
+    balls.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    cubes.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    candies.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
+    instancedGroup.add(balls);
+    instancedGroup.add(cubes);
+    instancedGroup.add(candies);
+
+    // 粒子光点（小辉光）
+    const glowGeo = new THREE.SphereGeometry(0.06,8,8);
+    const glowMat = new THREE.MeshBasicMaterial({color:0xffeab0, blending:THREE.AdditiveBlending, transparent:true, opacity:0.9});
+    const glows = [];
+    for(let i=0;i<24;i++){
+      const m = new THREE.Mesh(glowGeo, glowMat);
+      m.position.set( (Math.random()-0.5)*6, Math.random()*6-1, (Math.random()-0.5)*6);
+      m.scale.setScalar(1 + Math.random()*2);
+      scene.add(m);
+      glows.push({mesh:m, vib:Math.random()*0.02});
+    }
+
+    // 元素数据结构（positions / targetPositions）
+    const elements = []; // will hold objects for each instanced element: {type, id, currentPos, targetPos, scale, rot}
+    // Generate initial positions along a cone (合拢态)
+    function generateConePositions(n, radiusTop=0.0, radiusBottom=2.4, height=6.0){
+      const arr=[];
+      for(let i=0;i<n;i++){
+        const t = Math.random();
+        const y = -1 + t*height; // bottom to top
+        const layerFrac = (y + 1) / height; // 0..1
+        const r = (1 - layerFrac) * radiusBottom * (0.2 + Math.random()*0.9);
+        const theta = Math.random() * Math.PI*2;
+        const x = Math.cos(theta) * r;
+        const z = Math.sin(theta) * r;
+        arr.push(new THREE.Vector3(x, y, z));
+      }
+      return arr;
+    }
+
+    const conePositions = generateConePositions(ELEMENT_COUNT + 10, 0, 2.8, 6.2);
+    const scatterPositions = [];
+    for(let i=0;i<ELEMENT_COUNT+10;i++){
+      const v = new THREE.Vector3(
+        (Math.random()-0.5)*12,
+        (Math.random()-0.1)*8,
+        (Math.random()-0.5)*12
+      );
+      scatterPositions.push(v);
+    }
+
+    // 初始化元素数组并放置到 instanced mesh
+    let bi=0, ci=0, di=0;
+    for(let i=0;i<ELEMENT_COUNT;i++){
+      const kindRand = Math.random();
+      let kind = 'ball';
+      if(kindRand < 0.15) kind='cube';
+      else if(kindRand > 0.85) kind='candy';
+      const elem = {
+        kind,
+        id: i,
+        currentPos: conePositions[i].clone(),
+        targetPos: conePositions[i].clone(),
+        currentQuat: new THREE.Quaternion(),
+        targetQuat: new THREE.Quaternion(),
+        scale: 1 + Math.random()*0.6,
+        drift: new THREE.Vector3((Math.random()-0.5)*0.004, (Math.random()-0.5)*0.002, (Math.random()-0.5)*0.004)
+      };
+      elements.push(elem);
+      // assign instance matrix now
+      const dummy = new THREE.Object3D();
+      dummy.position.copy(elem.currentPos);
+      dummy.scale.setScalar(elem.scale);
+      dummy.updateMatrix();
+      if(elem.kind === 'ball'){ balls.setMatrixAt(bi, dummy.matrix); bi++; }
+      else if(elem.kind === 'cube'){ cubes.setMatrixAt(ci, dummy.matrix); ci++; }
+      else { // candy: rotate a bit
+        dummy.rotation.x = Math.random()*Math.PI*2;
+        dummy.updateMatrix();
+        candies.setMatrixAt(di, dummy.matrix); di++;
+      }
+    }
+    balls.instanceMatrix.needsUpdate = true;
+    cubes.instanceMatrix.needsUpdate = true;
+    candies.instanceMatrix.needsUpdate = true;
+
+    // ---------- 照片上传（单张 plane） ----------
+    const MAX_PHOTOS = 12;
+    const photoGroup = new THREE.Group();
+    scene.add(photoGroup);
+
+    const loader = new THREE.TextureLoader();
+    const photoMaterialCache = [];
+    const uploadedTextures = [];
+
+    function addPhotoTexture(imgURL){
+      if(photoPlanes.length >= MAX_PHOTOS) return;
+      loader.load(imgURL, tex => {
+        tex.encoding = THREE.sRGBEncoding;
+        tex.flipY = false;
+        const aspect = tex.image.width / Math.max(1, tex.image.height);
+        const geo = new THREE.PlaneGeometry(1.6 * aspect, 1.6);
+        const mat = new THREE.MeshStandardMaterial({map:tex, roughness:0.6, metalness:0.02, side:THREE.DoubleSide});
+        const plane = new THREE.Mesh(geo, mat);
+        // Random scatter initial position
+        const idx = photoPlanes.length;
+        plane.position.copy(scatterPositions[idx].clone());
+        plane.scale.setScalar(0.0); // will animate in
+        plane.userData = { idx, picked:false, targetScale: 1.0, currentScale: 0.0, openPos: scatterPositions[idx].clone(), conePos: conePositions[idx].clone() };
+        photoGroup.add(plane);
+        photoPlanes.push(plane);
+        uploadedTextures.push(tex);
+      });
+    }
+
+    // 文件上传处理
+    const uploadEl = document.getElementById('upload');
+    uploadEl.addEventListener('change', (e)=>{
+      const files = Array.from(e.target.files).slice(0, MAX_PHOTOS);
+      files.forEach(f=>{
+        const url = URL.createObjectURL(f);
+        addPhotoTexture(url);
+      });
+      // clear selection
+      uploadEl.value = '';
+    });
+
+    // ---------- 状态机与平滑过渡 ----------
+    let state = 'converge'; // 'converge' | 'scatter' | 'photo' (photo: when a photo enlarged)
+    let photoPicked = null; // picked plane
+    const lerpSpeed = 0.08;
+    function setState(s, photo=null){
+      state = s;
+      if(s === 'converge'){
+        // set all target positions to conePositions, photos scale -> small
+        elements.forEach((el,i)=> el.targetPos.copy(conePositions[i]));
+        photoPlanes.forEach((p,i)=> { p.userData.targetScale = 0.0; p.userData.targetPos = conePositions[i].clone().add(new THREE.Vector3((Math.random()-0.5)*0.6, (Math.random()-0.5)*0.6, (Math.random()-0.5)*0.6)); });
+        photoPicked = null;
+      } else if(s === 'scatter'){
+        elements.forEach((el,i)=> el.targetPos.copy(scatterPositions[i]));
+        photoPlanes.forEach((p,i)=> { p.userData.targetScale = 1.0; p.userData.targetPos = scatterPositions[i].clone(); });
+        photoPicked = null;
+      } else if(s === 'photo' && photo){
+        // keep others scatter, but magnify chosen photo and move near camera center
+        elements.forEach((el,i)=> el.targetPos.copy(scatterPositions[i]));
+        photoPlanes.forEach((p,i)=> { p.userData.targetScale = (p === photo) ? 3.2 : 0.8; p.userData.targetPos = (p === photo) ? new THREE.Vector3(0,0.85,-1.6).applyMatrix4(camera.matrixWorld) : scatterPositions[i].clone(); });
+        photoPicked = photo;
+      }
+    }
+
+    // 初始合拢
+    setState('converge');
+
+    // buttons
+    document.getElementById('btnConverge').onclick = ()=> setState('converge');
+    document.getElementById('btnScatter').onclick = ()=> setState('scatter');
+    document.getElementById('btnResetCam').onclick = ()=> {
+      camera.position.set(0,2.6,12); camera.lookAt(0,0,0);
+    };
+
+    // ---------- 手势（MediaPipe Hands） ----------
+    const videoElement = document.createElement('video');
+    videoElement.style.display = 'none';
+    videoElement.setAttribute('playsinline', '');
+    videoElement.muted = true;
+    document.body.appendChild(videoElement);
+
+    const previewEl = document.getElementById('webcamPreview');
+    const previewVideo = document.getElementById('webcamVideo');
+    // previewEl.style.display = 'block'; // 开启调试预览（可选）
+
+    const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+    hands.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.6
+    });
+
+    let cameraFeed;
+    async function startCamera(){
+      try{
+        const stream = await navigator.mediaDevices.getUserMedia({video:{width:640,height:480}, audio:false});
+        videoElement.srcObject = stream;
+        previewVideo.srcObject = stream;
+        await videoElement.play();
+        await previewVideo.play();
+        cameraFeed = new Camera(videoElement, { onFrame: async () => { await hands.send({image: videoElement}); }});
+        cameraFeed.start();
+      }catch(err){
+        alert('请在安全环境(https或localhost)并允许摄像头权限：' + err.message);
+      }
+    }
+    startCamera();
+
+    // helper: distance
+    function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y, a.z? a.z-b.z : 0); }
+
+    // track recent hand centers for rotation smoothing
+    const handHistory = [];
+    let lastHandAngle = 0;
+    let lastHandX = null;
+
+    hands.onResults((results) => {
+      if(!results.multiHandLandmarks || results.multiHandLandmarks.length === 0){
+        // no hand
+        // keep history small
+        while(handHistory.length>8) handHistory.shift();
+        return;
+      }
+      const lm = results.multiHandLandmarks[0]; // 21 landmarks
+      // compute simple "hand size" reference: distance wrist (0) to middle_mcp (9)
+      const wrist = lm[0];
+      const mid_mcp = lm[9];
+      const handSize = Math.max(0.01, dist(wrist, mid_mcp));
+      // count extended fingers via tip-pip relative distances
+      const tips = [8, 12, 16, 20];
+      const pips = [6, 10, 14, 18];
+      let extended = 0;
+      tips.forEach((tidx, idx)=>{
+        const tip = lm[tidx], pip = lm[pips[idx]], mcp = lm[pips[idx]-2];
+        // ratio dist(tip,pip) / dist(pip,mcp)
+        const d1 = dist(tip, pip);
+        const d2 = Math.max(1e-6, dist(pip, mcp));
+        if(d1 / d2 > 0.75) extended++;
+      });
+      // thumb: detect separately by comparing tip x relative to ip
+      const thumbExtended = (Math.abs(lm[4].x - lm[3].x) > 0.02 && Math.abs(lm[4].x - lm[2].x) > 0.02) ? 1 : 0;
+      const totalFingers = extended + thumbExtended;
+
+      // detect pinch (thumb tip 4 and index tip 8)
+      const pinchDist = dist(lm[4], lm[8]);
+      const pinchThreshold = 0.06 + 0.03 * (0.05 / handSize); // scaled
+      const isPinch = pinchDist < pinchThreshold;
+
+      // detect fist: all tips close to wrist
+      const avgTipDistToWrist = (tips.reduce((s,ti)=> s + dist(lm[ti], lm[0]),0) ) / tips.length;
+      const isFist = avgTipDistToWrist < handSize * 1.2 && totalFingers <= 1;
+
+      // compute hand center for rotation: use wrist->middle mcp vector to determine yaw
+      const a = lm[0], b = lm[9];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      // angle in screen space
+      const angle = Math.atan2(dy, dx);
+      // also track x motion for rotating scene
+      const handCenterX = (lm[0].x + lm[9].x) / 2;
+
+      // maintain history
+      handHistory.push({angle, handCenterX, time: performance.now(), lm});
+      while(handHistory.length > 6) handHistory.shift();
+
+      // gesture transitions (simple hysteresis)
+      if(isFist){
+        setState('converge');
+      } else if(totalFingers >= 4){
+        setState('scatter');
+      } else if(isPinch && state === 'scatter'){
+        // try to pick nearest photo to pinch point
+        // convert normalized hand landmark (index tip 8) to 3D ray and find intersect by projecting photos to 2D screen coordinates
+        // map landmark lm[8] (normalized x,y) to window coordinates
+        const nx = lm[8].x; const ny = lm[8].y;
+        // pick photo by smallest screen distance
+        let best = null; let bestd = 1e9;
+        photoPlanes.forEach(p=>{
+          const pos = p.position.clone();
+          // world -> screen
+          const v = pos.clone().project(camera);
+          const sx = (v.x * 0.5 + 0.5) * window.innerWidth;
+          const sy = (-v.y * 0.5 + 0.5) * window.innerHeight;
+          const hx = nx * window.innerWidth;
+          const hy = ny * window.innerHeight;
+          const dd = Math.hypot(sx-hx, sy-hy);
+          if(dd < bestd){ bestd = dd; best = p; }
+        });
+        // threshold in px
+        if(best && bestd < Math.min(window.innerWidth, window.innerHeight) * 0.12){
+          setState('photo', best);
+        }
+      }
+
+      // rotation control when in scatter: compute angle delta from last
+      if(state === 'scatter'){
+        if(lastHandAngle === null) lastHandAngle = angle;
+        const dAngle = angle - lastHandAngle;
+        // rotate camera around target (0,0,0)
+        // small rotation scaled
+        const rotSpeed = dAngle * -2.0;
+        // apply to camera orbit: rotate around Y
+        const q = new THREE.Quaternion();
+        q.setFromAxisAngle(new THREE.Vector3(0,1,0), rotSpeed);
+        camera.position.applyQuaternion(q);
+        camera.lookAt(0,0,0);
+        lastHandAngle = angle;
+      } else {
+        lastHandAngle = angle;
+      }
+
+    }); // hands.onResults
+
+    // ---------- 动画主循环（插值更新） ----------
+    const dummy = new THREE.Object3D();
+
+    function animate(){
+      requestAnimationFrame(animate);
+      // update each element currentPos -> targetPos
+      for(let i=0;i<elements.length;i++){
+        const el = elements[i];
+        // when in scatter state add tiny drift
+        el.currentPos.lerp(el.targetPos, lerpSpeed * (1 + Math.random()*0.4) );
+        el.currentQuat.slerp(el.targetQuat, 0.08);
+        // update instance matrices accordingly
+        dummy.position.copy(el.currentPos);
+        dummy.quaternion.copy(el.currentQuat);
+        dummy.scale.setScalar(el.scale);
+        dummy.updateMatrix();
+        // determine which instanced mesh index this belongs to by counting earlier items of same kind
+      }
+      // re-build instanced meshes quickly
+      let bi2=0, ci2=0, di2=0;
+      for(let i=0;i<elements.length;i++){
+        const el = elements[i];
+        dummy.position.copy(el.currentPos);
+        dummy.scale.setScalar(el.scale);
+        dummy.rotation.x += el.drift.x;
+        dummy.rotation.y += el.drift.y;
+        dummy.rotation.z += el.drift.z;
+        dummy.updateMatrix();
+        if(el.kind === 'ball'){ balls.setMatrixAt(bi2, dummy.matrix); bi2++; }
+        else if(el.kind === 'cube'){ cubes.setMatrixAt(ci2, dummy.matrix); ci2++; }
+        else { candies.setMatrixAt(di2, dummy.matrix); di2++; }
+      }
+      balls.instanceMatrix.needsUpdate = true;
+      cubes.instanceMatrix.needsUpdate = true;
+      candies.instanceMatrix.needsUpdate = true;
+
+      // photos: lerp pos/scale
+      photoPlanes.forEach(p=>{
+        if(!p.userData.targetPos) p.userData.targetPos = p.position.clone();
+        p.position.lerp(p.userData.targetPos, lerpSpeed*1.2);
+        p.userData.currentScale = (p.userData.currentScale || 0) + (p.userData.targetScale - (p.userData.currentScale || 0)) * lerpSpeed*1.2;
+        p.scale.setScalar(p.userData.currentScale || 0.001);
+        // if it's the picked photo, orient to face camera
+        if(photoPicked === p){
+          // put a little offset in front of camera
+          const camTarget = new THREE.Vector3(0,0,-1.6).applyMatrix4(camera.matrixWorld);
+          p.position.lerp(camTarget, lerpSpeed*1.6);
+          // face camera
+          p.lookAt(camera.position);
+        } else {
+          // random slight rotation
+          p.rotation.y += 0.002;
+        }
+      });
+
+      // glow vibrato
+      glows.forEach(g=>{
+        g.mesh.position.y += Math.sin(performance.now()*0.001 + g.mesh.uuid.length) * g.vib * 0.2;
+      });
+
+      controls.update();
+      composer.render();
+    }
+    animate();
+
+    // make window resize friendly
+    window.addEventListener('resize', ()=>{
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      composer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // ---------- 简易触摸/点击交互（桌面）: 鼠标点击可以放大某张照片 ----------
+    renderer.domElement.addEventListener('pointerdown', (ev)=>{
+      // raycast to photos
+      const mouse = new THREE.Vector2( (ev.clientX / window.innerWidth) * 2 - 1, -(ev.clientY / window.innerHeight) * 2 + 1 );
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(mouse, camera);
+      const hits = ray.intersectObjects(photoPlanes, true);
+      if(hits.length > 0){
+        const obj = hits[0].object;
+        if(state === 'scatter') setState('photo', obj);
+        else setState('scatter');
+      } else {
+        // click empty -> if in photo state, revert
+        if(state === 'photo') setState('scatter');
+      }
+    });
+
+    // ---------- 简单启动指引（控制台） ----------
+    console.log('Gesture Tree ready. Upload photos then use hand gestures: fist=converge, open hand=scatter, pinch=pick photo.');
+
+  </script>
 </body>
 </html>
