@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Christmas Dream - Enhanced Gesture Control</title>
+    <title>Christmas Dream - Robust Version</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #020505; font-family: 'Courier New', Courier, monospace; }
         #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
@@ -13,10 +13,10 @@
             display: flex; flex-direction: column; justify-content: space-between; padding: 20px; box-sizing: border-box;
         }
 
-        /* 预览窗口现在只作为调试参考，因为我们有了3D光标 */
         #video-preview {
             position: absolute; bottom: 20px; right: 20px; width: 160px; height: 120px; 
             border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 8px; transform: scaleX(-1); opacity: 0.5;
+            display: none; /* 默认隐藏，开启成功后再显示 */
         }
 
         #status-bar {
@@ -32,10 +32,12 @@
         }
         #upload-btn:hover { background: #D4AF37; color: #000; box-shadow: 0 0 15px #D4AF37; }
         
+        /* Loading 样式优化 */
         #loader {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #020505; z-index: 100;
             display: flex; justify-content: center; align-items: center; color: #D4AF37; flex-direction: column;
-            transition: opacity 1s;
+            transition: opacity 0.8s;
+            text-align: center;
         }
         .spinner {
             width: 40px; height: 40px; border: 2px solid transparent; border-top-color: #D4AF37; border-radius: 50%;
@@ -43,19 +45,24 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
+        /* 错误提示 */
+        #error-log {
+            color: #ff4444; margin-top: 15px; font-size: 12px; max-width: 80%;
+        }
+        
         .highlight-text { color: #fff; text-shadow: 0 0 5px #fff; }
     </style>
     
-    <!-- 引入库 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- 引入 Three.js (使用更稳定的 unpkg) -->
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://unpkg.com/gsap@3.12.2/dist/gsap.min.js"></script>
     
-    <!-- MediaPipe Hands -->
+    <!-- MediaPipe Hands (使用 jsdelivr) -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -64,7 +71,9 @@
 
 <div id="loader">
     <div class="spinner"></div>
-    <div>SUMMONING ELVES...</div>
+    <div id="loader-text">INITIALIZING MAGIC...</div>
+    <div id="error-log"></div>
+    <button id="force-start-btn" style="margin-top:20px; padding:5px 10px; background:#333; color:#aaa; border:1px solid #555; display:none; cursor:pointer;">Skip Camera & Start</button>
 </div>
 
 <div id="ui-layer">
@@ -87,6 +96,26 @@
 <div id="canvas-container"></div>
 
 <script>
+// 日志辅助
+function logError(msg) {
+    console.error(msg);
+    const el = document.getElementById('error-log');
+    if(el) el.innerText = "Error: " + msg;
+    // 出现错误显示跳过按钮
+    document.getElementById('force-start-btn').style.display = 'inline-block';
+}
+
+function hideLoader() {
+    const loader = document.getElementById('loader');
+    if(loader && loader.style.display !== 'none') {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 800);
+    }
+}
+
+// 强制启动按钮
+document.getElementById('force-start-btn').addEventListener('click', hideLoader);
+
 /**
  * 配置
  */
@@ -96,119 +125,100 @@ const CONFIG = {
     treeRadius: 25,
     colors: [0xD4AF37, 0xC41E3A, 0x2E8B57], 
     bloom: { strength: 1.6, radius: 0.5, threshold: 0.15 },
-    cursorSmoothing: 0.15 // 鼠标平滑系数 (越小越平滑，但延迟越高)
+    cursorSmoothing: 0.15 
 };
 
 const STATE = {
     current: 'TREE',
     handDetected: false,
     focusedPhoto: null,
-    hoveredPhoto: null, // 当前悬停的照片
+    hoveredPhoto: null, 
     rotationSpeed: 0,
     targetRotationY: 0
 };
 
-// 核心变量
 let scene, camera, renderer, composer;
 let treeSystem, snowSystem, cursorSprite;
 let photos = []; 
 let raycaster = new THREE.Raycaster();
 
-// 坐标系统变量
-let rawMouse = new THREE.Vector2();     // 原始手势坐标
-let smoothedMouse = new THREE.Vector2();// 平滑后的坐标
-let cursorWorldPos = new THREE.Vector3(); // 光标在3D空间的位置
+let rawMouse = new THREE.Vector2();     
+let smoothedMouse = new THREE.Vector2();
 
 /**
- * 1. 初始化
+ * 1. 初始化 Three.js
  */
 function initThree() {
-    const container = document.getElementById('canvas-container');
-    
-    scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x020505, 0.02);
+    try {
+        const container = document.getElementById('canvas-container');
+        
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020505, 0.02);
 
-    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 15, 85);
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 15, 85);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    container.appendChild(renderer.domElement);
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        container.appendChild(renderer.domElement);
 
-    // 后处理
-    const renderScene = new THREE.RenderPass(scene, camera);
-    const bloomPass = new THREE.UnrealBloomPass(
-        new THREE.Vector2(window.innerWidth, window.innerHeight),
-        CONFIG.bloom.strength, CONFIG.bloom.radius, CONFIG.bloom.threshold
-    );
-    composer = new THREE.EffectComposer(renderer);
-    composer.addPass(renderScene);
-    composer.addPass(bloomPass);
+        const renderScene = new THREE.RenderPass(scene, camera);
+        const bloomPass = new THREE.UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            CONFIG.bloom.strength, CONFIG.bloom.radius, CONFIG.bloom.threshold
+        );
+        composer = new THREE.EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
 
-    // 灯光
-    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-    const pLight = new THREE.PointLight(0xD4AF37, 1.2, 100);
-    pLight.position.set(0, 30, 20);
-    scene.add(pLight);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+        const pLight = new THREE.PointLight(0xD4AF37, 1.2, 100);
+        pLight.position.set(0, 30, 20);
+        scene.add(pLight);
 
-    // 创建场景物体
-    createTreeParticles();
-    createSnow();
-    createCursor(); // 新增：精灵游标
-    
-    window.addEventListener('resize', onWindowResize, false);
-    
-    // 移除Loading
-    setTimeout(() => {
-        document.getElementById('loader').style.opacity = '0';
-        setTimeout(() => document.getElementById('loader').style.display = 'none', 1000);
-    }, 1500);
+        createTreeParticles();
+        createSnow();
+        createCursor();
+        
+        window.addEventListener('resize', onWindowResize, false);
+        
+        // 成功渲染第一帧后，如果MediaPipe还在加载，可以先不管，至少场景出来了
+        animate(); 
+
+    } catch (e) {
+        logError("WebGL Init Failed: " + e.message);
+    }
 }
 
-/**
- * 新增：精灵游标 (Fairy Cursor)
- * 一个淡色、闪烁的小光点，跟随手势
- */
 function createCursor() {
-    // 动态生成一个发光圆点纹理
     const canvas = document.createElement('canvas');
     canvas.width = 64; canvas.height = 64;
     const ctx = canvas.getContext('2d');
     const grad = ctx.createRadialGradient(32,32,0, 32,32,32);
-    grad.addColorStop(0, 'rgba(255, 255, 230, 1)'); // 中心亮白
-    grad.addColorStop(0.4, 'rgba(212, 175, 55, 0.5)'); // 中间金
+    grad.addColorStop(0, 'rgba(255, 255, 230, 1)'); 
+    grad.addColorStop(0.4, 'rgba(212, 175, 55, 0.5)'); 
     grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = grad;
     ctx.fillRect(0,0,64,64);
 
     const texture = new THREE.CanvasTexture(canvas);
     const material = new THREE.SpriteMaterial({ 
-        map: texture, 
-        color: 0xffffff, 
-        transparent: true, 
-        opacity: 0, // 初始隐藏，有手才显示
-        depthTest: false // 始终在最前
+        map: texture, color: 0xffffff, transparent: true, opacity: 0, depthTest: false 
     });
-
     cursorSprite = new THREE.Sprite(material);
     cursorSprite.scale.set(3, 3, 1);
     cursorSprite.renderOrder = 999;
     scene.add(cursorSprite);
 }
 
-/**
- * 2. 粒子树系统
- */
 function createTreeParticles() {
     const geometry = new THREE.BufferGeometry();
-    const positions = [], colors = [], sizes = [];
-    const originalPos = [], scatteredPos = [];
+    const positions = [], colors = [], sizes = [], originalPos = [], scatteredPos = [];
     const colorObj = new THREE.Color();
 
     for (let i = 0; i < CONFIG.particleCount; i++) {
-        // 树形态 (螺旋圆锥)
         const y = Math.random() * CONFIG.treeHeight; 
         const r = (CONFIG.treeHeight - y) / CONFIG.treeHeight * CONFIG.treeRadius;
         const angle = y * 1.5 + Math.random() * Math.PI * 2;
@@ -220,11 +230,8 @@ function createTreeParticles() {
 
         positions.push(tx, ty, tz);
         originalPos.push(tx, ty, tz);
-
-        // 散开形态
         scatteredPos.push((Math.random()-0.5)*120, (Math.random()-0.5)*120, (Math.random()-0.5)*120);
 
-        // 颜色
         const rand = Math.random();
         let hex = rand > 0.95 ? CONFIG.colors[0] : (rand > 0.85 ? CONFIG.colors[1] : CONFIG.colors[2]);
         colorObj.setHex(hex);
@@ -279,9 +286,6 @@ function createSnow() {
     scene.add(snowSystem);
 }
 
-/**
- * 3. 照片上传
- */
 document.getElementById('file-input').addEventListener('change', (e) => {
     const files = e.target.files;
     if(!files.length) return;
@@ -295,19 +299,11 @@ document.getElementById('file-input').addEventListener('change', (e) => {
 function createPolaroid(url) {
     new THREE.TextureLoader().load(url, (tex) => {
         const grp = new THREE.Group();
-        
-        // 边框
         const frame = new THREE.Mesh(new THREE.PlaneGeometry(6, 7.2), new THREE.MeshBasicMaterial({color:0xffffff}));
-        // 照片
         const pic = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 5.2), new THREE.MeshBasicMaterial({map:tex}));
         pic.position.set(0, 0.6, 0.05);
-        
         grp.add(frame); grp.add(pic);
         
-        // 标记此Mesh可交互
-        frame.userData.isInteractable = true;
-        
-        // 随机位置
         const y = (Math.random()-0.5) * CONFIG.treeHeight;
         const r = ((CONFIG.treeHeight/2 - y)/CONFIG.treeHeight * CONFIG.treeRadius) + 4;
         const ang = Math.random() * 6.28;
@@ -325,26 +321,45 @@ function createPolaroid(url) {
         
         scene.add(grp);
         photos.push(grp);
-        
-        // 进场特效
         gsap.from(grp.scale, {x:0, y:0, z:0, duration:1, ease:"back.out(1.7)"});
     });
 }
 
 /**
- * 4. MediaPipe 手势逻辑 (含平滑处理)
+ * MediaPipe 逻辑 - 增加错误处理
  */
-function setupMediaPipe() {
+async function setupMediaPipe() {
     const vid = document.getElementById('video-preview');
-    const hands = new Hands({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+    const loaderText = document.getElementById('loader-text');
     
-    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.6 });
-    hands.onResults(onHandResults);
-    
-    new Camera(vid, {
-        onFrame: async () => await hands.send({image: vid}),
-        width: 320, height: 240
-    }).start();
+    loaderText.innerText = "LOADING AI MODELS...";
+
+    try {
+        const hands = new Hands({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+        }});
+        
+        hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.6 });
+        hands.onResults(onHandResults);
+        
+        loaderText.innerText = "ACCESSING CAMERA...";
+        
+        const cameraUtils = new Camera(vid, {
+            onFrame: async () => {
+                await hands.send({image: vid});
+            },
+            width: 320, height: 240
+        });
+        
+        await cameraUtils.start();
+        
+        // 只有当摄像头成功开启，才隐藏Loader，并显示预览窗口
+        vid.style.display = "block";
+        hideLoader();
+
+    } catch (error) {
+        logError("Camera/AI Error: " + error.message + ". Please try Local Server or check HTTPS.");
+    }
 }
 
 function onHandResults(res) {
@@ -352,45 +367,33 @@ function onHandResults(res) {
         STATE.handDetected = true;
         const landmarks = res.multiHandLandmarks[0];
         
-        // 1. 更新手部映射坐标 (使用食指尖)
-        // MediaPipe x是镜像的，需要翻转
         const ndcX = (1 - landmarks[8].x) * 2 - 1; 
         const ndcY = (1 - landmarks[8].y) * 2 - 1;
         rawMouse.set(ndcX, ndcY);
 
-        // 2. 识别手势
         const gesture = detectGesture(landmarks);
-        
-        // 3. 执行状态变更
         handleStateChange(gesture);
         
-        // 4. 旋转控制 (在 SCATTER 态下)
         if (STATE.current === 'SCATTER' && gesture !== 'PINCH') {
             const palmX = landmarks[9].x; 
-            const target = (0.5 - palmX) * 4; // 修正方向
+            const target = (0.5 - palmX) * 4; 
             STATE.targetRotationY += (target - STATE.targetRotationY) * 0.05;
         }
         
     } else {
         STATE.handDetected = false;
-        cursorSprite.visible = false;
+        if(cursorSprite) cursorSprite.visible = false;
     }
 }
 
 function detectGesture(lm) {
     const d = (p1, p2) => Math.hypot(p1.x - p2.x, p1.y - p2.y);
     const wrist = lm[0];
-    
-    // 捏合：拇指尖(4)与食指尖(8)距离
     const pinchDist = d(lm[4], lm[8]);
-    
-    // 握拳：指尖靠近手腕
     const isFist = [8, 12, 16, 20].every(i => d(lm[i], wrist) < 0.25);
-    
-    // 张开
     const isOpen = [8, 12, 16, 20].every(i => d(lm[i], wrist) > 0.35);
 
-    if (pinchDist < 0.05) return 'PINCH'; // 调小阈值提高捏合精度要求
+    if (pinchDist < 0.05) return 'PINCH'; 
     if (isFist) return 'FIST';
     if (isOpen) return 'OPEN';
     return 'UNKNOWN';
@@ -398,51 +401,34 @@ function detectGesture(lm) {
 
 function handleStateChange(gesture) {
     const status = document.getElementById('state-text');
-    
     if (gesture === 'FIST' && STATE.current !== 'TREE') {
-        STATE.current = 'TREE';
-        status.innerText = "TREE (MERGED)";
-        exitFocus();
-        
+        STATE.current = 'TREE'; status.innerText = "TREE (MERGED)"; exitFocus();
         gsap.to(treeSystem.material.uniforms.mixVal, {value:0, duration:2});
         gsap.to(camera.position, {z:85, duration:2});
-        
         photos.forEach(p => {
             gsap.to(p.position, {x:p.userData.treePos.x, y:p.userData.treePos.y, z:p.userData.treePos.z, duration:1.5});
             gsap.to(p.rotation, {x:p.userData.treeRot.x, y:p.userData.treeRot.y, z:p.userData.treeRot.z, duration:1.5});
         });
     }
     else if (gesture === 'OPEN' && STATE.current !== 'SCATTER') {
-        STATE.current = 'SCATTER';
-        status.innerText = "SCATTER (FLOATING)";
-        exitFocus();
-        
+        STATE.current = 'SCATTER'; status.innerText = "SCATTER (FLOATING)"; exitFocus();
         gsap.to(treeSystem.material.uniforms.mixVal, {value:1, duration:2});
-        
         photos.forEach(p => {
             gsap.to(p.position, {x:p.userData.scatterPos.x, y:p.userData.scatterPos.y, z:p.userData.scatterPos.z, duration:2});
             gsap.to(p.rotation, {x:p.userData.scatterRot.x, y:p.userData.scatterRot.y, z:p.userData.scatterRot.z, duration:2});
         });
     }
     else if (gesture === 'PINCH') {
-        // 只有在光标当前正好悬停在照片上时，才触发抓取
-        if (STATE.hoveredPhoto && STATE.current !== 'FOCUS') {
-            enterFocus(STATE.hoveredPhoto);
-        }
+        if (STATE.hoveredPhoto && STATE.current !== 'FOCUS') enterFocus(STATE.hoveredPhoto);
     }
 }
 
 function enterFocus(obj) {
-    STATE.current = 'FOCUS';
-    STATE.focusedPhoto = obj;
-    document.getElementById('state-text').innerText = "MEMORY (FOCUSED)";
-    
-    // 目标位置：相机前方固定距离
+    STATE.current = 'FOCUS'; STATE.focusedPhoto = obj; document.getElementById('state-text').innerText = "MEMORY (FOCUSED)";
     const target = new THREE.Vector3(0, 0, -15).applyMatrix4(camera.matrixWorld);
-    
     gsap.to(obj.position, {x:target.x, y:target.y, z:target.z, duration:1, ease:"power2.out", onUpdate: () => obj.lookAt(camera.position)});
     gsap.to(obj.scale, {x:2.5, y:2.5, z:2.5, duration:1});
-    gsap.to(obj.rotation, {z:0, duration:1}); // 扶正
+    gsap.to(obj.rotation, {z:0, duration:1});
 }
 
 function exitFocus() {
@@ -452,86 +438,54 @@ function exitFocus() {
     }
 }
 
-/**
- * 5. 渲染循环与核心交互逻辑
- */
 function animate() {
     requestAnimationFrame(animate);
     const time = performance.now() * 0.001;
 
-    // A. 坐标平滑 (关键改进)
-    // 每一帧只向目标位置移动一小步，消除抖动
     smoothedMouse.lerp(rawMouse, CONFIG.cursorSmoothing);
 
-    // B. 更新光标位置
-    if (STATE.handDetected) {
+    if (STATE.handDetected && cursorSprite) {
         cursorSprite.visible = true;
-        
-        // 使用平滑后的坐标进行射线检测
         raycaster.setFromCamera(smoothedMouse, camera);
         
-        // 默认光标在相机前方30单位漂浮
         const defaultCursorPos = new THREE.Vector3(smoothedMouse.x, smoothedMouse.y, 0.5)
             .unproject(camera).normalize().multiplyScalar(30).add(camera.position);
-            
         cursorSprite.position.copy(defaultCursorPos);
-        
-        // 闪烁效果
         cursorSprite.material.opacity = 0.5 + Math.sin(time * 10) * 0.3;
 
-        // C. 悬停检测 (Hover Logic)
-        // 只有在 SCATTER 模式下允许交互
         if (STATE.current === 'SCATTER') {
-            // 检测照片 (photos 数组存储的是Group，我们需要检测子对象并向上查找)
             const intersects = raycaster.intersectObjects(scene.children, true);
             let found = null;
-            
             for (let i = 0; i < intersects.length; i++) {
-                // 找到最近的拍立得Group
                 if (intersects[i].object.parent && photos.includes(intersects[i].object.parent)) {
                     found = intersects[i].object.parent;
-                    // 让光标吸附到物体表面
                     cursorSprite.position.copy(intersects[i].point); 
                     break;
                 }
             }
-
-            // 处理悬停状态变化
             if (found !== STATE.hoveredPhoto) {
-                // 离开旧的
-                if (STATE.hoveredPhoto) {
-                    gsap.to(STATE.hoveredPhoto.scale, {x:1, y:1, z:1, duration:0.3});
-                    // 恢复颜色（可选）
-                }
-                // 进入新的
-                if (found) {
-                    gsap.to(found.scale, {x:1.2, y:1.2, z:1.2, duration:0.3, ease:"back.out"});
-                }
+                if (STATE.hoveredPhoto) gsap.to(STATE.hoveredPhoto.scale, {x:1, y:1, z:1, duration:0.3});
+                if (found) gsap.to(found.scale, {x:1.2, y:1.2, z:1.2, duration:0.3, ease:"back.out"});
                 STATE.hoveredPhoto = found;
             }
-        } else {
-             STATE.hoveredPhoto = null;
+        } else { STATE.hoveredPhoto = null; }
+    }
+
+    if(treeSystem) treeSystem.material.uniforms.time.value = time;
+    if(snowSystem) {
+        const snowPos = snowSystem.geometry.attributes.position.array;
+        for(let i=1; i<snowPos.length; i+=3) {
+            snowPos[i] -= 0.15;
+            if(snowPos[i] < -60) snowPos[i] = 100;
         }
+        snowSystem.geometry.attributes.position.needsUpdate = true;
     }
 
-    // D. 场景动画
-    treeSystem.material.uniforms.time.value = time;
-    
-    // 雪花循环
-    const snowPos = snowSystem.geometry.attributes.position.array;
-    for(let i=1; i<snowPos.length; i+=3) {
-        snowPos[i] -= 0.15;
-        if(snowPos[i] < -60) snowPos[i] = 100;
-    }
-    snowSystem.geometry.attributes.position.needsUpdate = true;
-
-    // 旋转场景
     if (STATE.current !== 'FOCUS') {
         if(!STATE.handDetected && STATE.current === 'TREE') STATE.targetRotationY += 0.0015;
         scene.rotation.y += (STATE.targetRotationY - scene.rotation.y) * 0.05;
     }
     
-    // 漂浮微动
     if(STATE.current === 'SCATTER') {
         photos.forEach((p,i) => {
             if(p !== STATE.focusedPhoto && p !== STATE.hoveredPhoto) {
@@ -540,7 +494,7 @@ function animate() {
         });
     }
 
-    composer.render();
+    if(composer) composer.render();
 }
 
 function onWindowResize() {
@@ -550,7 +504,20 @@ function onWindowResize() {
     composer.setSize(window.innerWidth, window.innerHeight);
 }
 
-window.onload = () => { initThree(); setupMediaPipe(); animate(); };
+// 启动逻辑：确保 Three.js 初始化，然后尝试 MediaPipe
+window.onload = function() {
+    initThree();
+    setupMediaPipe();
+    
+    // 超时保险：如果 6秒后还在Loading，说明摄像头/模型挂了，强制进入
+    setTimeout(() => {
+        const loader = document.getElementById('loader');
+        if (loader.style.display !== 'none') {
+            logError("Network/Camera timeout. Auto-starting scene...");
+            hideLoader();
+        }
+    }, 6000);
+};
 
 </script>
 </body>
