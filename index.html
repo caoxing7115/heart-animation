@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gesture Controlled Christmas Dream - Optimized</title>
+    <title>Gesture Controlled Christmas Dream - Optimized Focus</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #020505; font-family: 'Courier New', Courier, monospace; cursor: none; /* 隐藏默认鼠标 */ }
+        body { margin: 0; overflow: hidden; background-color: #020505; font-family: 'Courier New', Courier, monospace; cursor: none; }
         #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
         
         /* UI 层 */
@@ -14,19 +14,16 @@
             display: flex; flex-direction: column; justify-content: space-between; padding: 20px; box-sizing: border-box;
         }
 
-        /* 摄像头预览 */
         #video-preview {
             position: absolute; bottom: 20px; right: 20px; width: 160px; height: 120px; 
             border: 2px solid #D4AF37; border-radius: 8px; transform: scaleX(-1); opacity: 0.7;
         }
 
-        /* 状态指示器 */
         #status-bar {
             color: #D4AF37; text-shadow: 0 0 10px #D4AF37; font-size: 14px; background: rgba(0,0,0,0.5);
             padding: 10px; border-radius: 4px; pointer-events: auto; max-width: 350px;
         }
         
-        /* 上传按钮 */
         #upload-btn {
             pointer-events: auto; cursor: pointer; background: rgba(212, 175, 55, 0.2); border: 1px solid #D4AF37;
             color: #D4AF37; padding: 10px 20px; border-radius: 20px; transition: 0.3s; text-transform: uppercase;
@@ -34,7 +31,6 @@
         }
         #upload-btn:hover { background: #D4AF37; color: #000; box-shadow: 0 0 20px #D4AF37; }
         
-        /* 加载遮罩 */
         #loader {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100;
             display: flex; justify-content: center; align-items: center; color: #D4AF37; flex-direction: column;
@@ -46,10 +42,10 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* --- 精灵游标样式 (新增) --- */
+        /* 精灵游标 */
         #fairy-cursor {
             position: fixed; top: 0; left: 0; z-index: 9999; pointer-events: none;
-            width: 0; height: 0; /* 使用transform定位 */
+            width: 0; height: 0;
         }
         .cursor-core {
             width: 12px; height: 12px; background: #fff; border-radius: 50%;
@@ -62,7 +58,6 @@
             position: absolute; transform: translate(-50%, -50%);
             animation: ripple 2s infinite linear;
         }
-        /* 抓取状态下的光标样式 */
         #fairy-cursor.grabbing .cursor-core {
             background: #ff4444; box-shadow: 0 0 20px 8px #ff0000; scale: 1.5;
         }
@@ -79,7 +74,6 @@
         .guide { font-size: 12px; color: #aaa; margin-top: 5px; line-height: 1.6; }
     </style>
     
-    <!-- 引入库 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
@@ -89,7 +83,6 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
-    <!-- MediaPipe Hands -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
@@ -103,7 +96,6 @@
     <div style="font-size: 12px; margin-top:10px; color:#666;">Please allow camera access</div>
 </div>
 
-<!-- 精灵游标 -->
 <div id="fairy-cursor">
     <div class="cursor-core"></div>
     <div class="cursor-ring"></div>
@@ -115,7 +107,7 @@
         <div class="guide">
             👊 握拳: 聚合成树<br>
             🖐 张开: 散开照片 (散开后才能抓取)<br>
-            👌 捏合: <b>抓取照片</b> (对准发光照片)
+            👌 捏合: <b>抓取并查看照片</b>
         </div>
         <label id="upload-btn">
             Upload Memories (Photos)
@@ -129,38 +121,35 @@
 
 <script>
 /**
- * 核心配置与状态管理
+ * 配置与状态
  */
 const CONFIG = {
     particleCount: 45000,
     treeHeight: 60,
     treeRadius: 25,
     colors: [0xD4AF37, 0xC41E3A, 0x2E8B57],
-    bloom: { strength: 1.5, radius: 0.4, threshold: 0.15 } // 稍微降低Bloom防止过曝
+    // 注意：这里的Bloom强度比较高，所以我们后面需要降低照片亮度来防止过曝
+    bloom: { strength: 1.6, radius: 0.5, threshold: 0.1 } 
 };
 
 const STATE = {
     current: 'TREE',
     handDetected: false,
     focusedPhoto: null,
-    hoveredPhoto: null, // 新增：当前悬停的照片
+    hoveredPhoto: null,
     rotationSpeed: 0,
     targetRotationY: 0
 };
 
-// 全局变量
 let scene, camera, renderer, composer;
 let treeSystem, snowSystem;
 let photos = [];
 let raycaster = new THREE.Raycaster();
-
-// 游标与平滑相关
-let mouse = new THREE.Vector2(-999, -999); // Three.js 用的归一化坐标
-let rawMouse = new THREE.Vector2(-999, -999); // MediaPipe 原始坐标
+let mouse = new THREE.Vector2(-999, -999); 
 let cursorDiv = document.getElementById('fairy-cursor');
 
 /**
- * 1. Three.js 初始化与场景构建
+ * Three.js 初始化
  */
 function initThree() {
     const container = document.getElementById('canvas-container');
@@ -169,6 +158,7 @@ function initThree() {
     scene.fog = new THREE.FogExp2(0x020505, 0.015);
 
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    // 初始相机位置
     camera.position.set(0, 20, 80);
 
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -205,15 +195,11 @@ function initThree() {
 }
 
 /**
- * 2. 粒子系统
+ * 粒子与雪花
  */
 function createTreeParticles() {
     const geometry = new THREE.BufferGeometry();
-    const positions = [];
-    const colors = [];
-    const sizes = [];
-    const originalPos = [];
-    const scatteredPos = [];
+    const positions = [], colors = [], sizes = [], originalPos = [], scatteredPos = [];
     const colorObj = new THREE.Color();
 
     for (let i = 0; i < CONFIG.particleCount; i++) {
@@ -284,11 +270,8 @@ function createTreeParticles() {
                 if (gl_FragColor.a < 0.5) discard;
             }
         `,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        transparent: true
+        depthWrite: false, blending: THREE.AdditiveBlending, transparent: true
     });
-
     treeSystem = new THREE.Points(geometry, material);
     scene.add(treeSystem);
 }
@@ -297,22 +280,17 @@ function createSnow() {
     const geometry = new THREE.BufferGeometry();
     const vertices = [];
     for (let i = 0; i < 2000; i++) {
-        vertices.push(
-            Math.random() * 200 - 100,
-            Math.random() * 200 - 100,
-            Math.random() * 200 - 100
-        );
+        vertices.push(Math.random()*200-100, Math.random()*200-100, Math.random()*200-100);
     }
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-    const material = new THREE.PointsMaterial({
+    snowSystem = new THREE.Points(geometry, new THREE.PointsMaterial({
         color: 0xffffff, size: 0.5, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending
-    });
-    snowSystem = new THREE.Points(geometry, material);
+    }));
     scene.add(snowSystem);
 }
 
 /**
- * 3. 照片系统
+ * 照片系统
  */
 document.getElementById('file-input').addEventListener('change', handleImageUpload);
 
@@ -331,20 +309,23 @@ function createPolaroid(imgUrl) {
     loader.load(imgUrl, (texture) => {
         const group = new THREE.Group();
         
-        // 增加 Frame 的厚度和细节，方便射线检测
+        // 1. 相框 (BoxGeometry以便射线检测)
         const frameGeo = new THREE.BoxGeometry(6, 7, 0.1); 
         const frameMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });
         const frame = new THREE.Mesh(frameGeo, frameMat);
         
+        // 2. 照片内容 (MeshBasicMaterial, 初始为全白)
         const photoGeo = new THREE.PlaneGeometry(5, 5);
-        const photoMat = new THREE.MeshBasicMaterial({ map: texture });
+        const photoMat = new THREE.MeshBasicMaterial({ map: texture, color: 0xffffff }); 
         const photo = new THREE.Mesh(photoGeo, photoMat);
         photo.position.z = 0.06;
         photo.position.y = 0.5;
+        photo.name = "photoContent"; // 命名方便后续查找修改颜色
         
         group.add(frame);
         group.add(photo);
 
+        // 随机分布
         const y = Math.random() * CONFIG.treeHeight - CONFIG.treeHeight/2;
         const radius = (CONFIG.treeHeight/2 - y) / CONFIG.treeHeight * CONFIG.treeRadius * 1.2;
         const angle = Math.random() * Math.PI * 2;
@@ -354,7 +335,6 @@ function createPolaroid(imgUrl) {
             treeRot: new THREE.Euler(0, -angle, 0),
             scatterPos: new THREE.Vector3((Math.random()-0.5)*80, (Math.random()-0.5)*80, (Math.random()-0.5)*80),
             scatterRot: new THREE.Euler(Math.random()*Math.PI, Math.random()*Math.PI, 0),
-            originalScale: new THREE.Vector3(1, 1, 1)
         };
 
         group.position.copy(group.userData.treePos);
@@ -362,61 +342,40 @@ function createPolaroid(imgUrl) {
         group.lookAt(0, y, 0);
 
         scene.add(group);
-        photos.push(frame); // 重点：我们将frame作为射线检测目标，因为它是Group中最大的实体
-        frame.parentGroup = group; // 反向引用
+        photos.push(frame); // 射线检测目标是Frame
+        frame.parentGroup = group;
 
         gsap.from(group.scale, { x: 0, y: 0, z: 0, duration: 1, ease: "elastic.out(1, 0.3)" });
     });
 }
 
 /**
- * 4. MediaPipe 手势与平滑逻辑
+ * 手势与交互
  */
 function setupMediaPipe() {
     const video = document.getElementById('video-preview');
     const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-    
-    hands.setOptions({
-        maxNumHands: 1,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.6,
-        minTrackingConfidence: 0.5
-    });
-    
+    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
     hands.onResults(onHandsResults);
-    
-    const cameraUtils = new Camera(video, {
-        onFrame: async () => { await hands.send({image: video}); },
-        width: 320, height: 240
-    });
-    cameraUtils.start();
+    new Camera(video, { onFrame: async () => { await hands.send({image: video}); }, width: 320, height: 240 }).start();
 }
 
-// 简单的线性插值函数，用于平滑移动
-function lerp(start, end, amt) {
-    return (1 - amt) * start + amt * end;
-}
+function lerp(start, end, amt) { return (1 - amt) * start + amt * end; }
 
 function onHandsResults(results) {
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
         STATE.handDetected = true;
         const landmarks = results.multiHandLandmarks[0];
         
-        // 1. 更新手势光标位置 (带平滑)
         updateHandCursor(landmarks);
-        
-        // 2. 识别手势
         const gesture = detectGesture(landmarks);
         updateStateByGesture(gesture);
 
-        // 3. 旋转控制 (当不在抓取时)
         if (STATE.current === 'SCATTER' && gesture !== 'PINCH' && STATE.current !== 'FOCUS') {
             handleRotation(landmarks);
         }
-
     } else {
         STATE.handDetected = false;
-        // 如果没有手，光标移出屏幕
         mouse.set(-999, -999); 
         cursorDiv.style.opacity = '0';
         STATE.targetRotationY += 0.002;
@@ -424,23 +383,14 @@ function onHandsResults(results) {
 }
 
 function updateHandCursor(landmarks) {
-    // 使用食指指尖 (Index Tip: 8)
     const indexTip = landmarks[8];
-    
-    // MediaPipe 坐标 (0-1). X轴需要翻转，因为是镜像
     const targetX = (1 - indexTip.x) * 2 - 1; 
     const targetY = - (indexTip.y * 2 - 1); 
     
-    // 初始化
-    if (mouse.x === -999) {
-        mouse.set(targetX, targetY);
-    }
-    
-    // 平滑插值 (0.2 的系数决定延迟感，越小越平滑但延迟越高)
+    if (mouse.x === -999) mouse.set(targetX, targetY);
     mouse.x = lerp(mouse.x, targetX, 0.2);
     mouse.y = lerp(mouse.y, targetY, 0.2);
     
-    // 更新 HTML 精灵游标位置
     const screenX = (mouse.x * .5 + .5) * window.innerWidth;
     const screenY = (mouse.y * -.5 + .5) * window.innerHeight;
     
@@ -458,28 +408,24 @@ function detectGesture(landmarks) {
 
     const fingersOpen = [indexTip, middleTip, ringTip, pinkyTip].every(tip => distance(tip, wrist) > 0.3);
     const pinchDist = distance(thumbTip, indexTip);
-    
     const isFist = [indexTip, middleTip, ringTip, pinkyTip].every(tip => distance(tip, wrist) < 0.25);
 
-    // 宽松的捏合判定 (0.08)
     if (pinchDist < 0.08) return 'PINCH';
     if (isFist) return 'FIST';
     if (fingersOpen) return 'OPEN';
-    
     return 'UNKNOWN';
 }
 
-function distance(p1, p2) {
-    return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
-}
+function distance(p1, p2) { return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2)); }
 
 function updateStateByGesture(gesture) {
     const statusText = document.getElementById('state-text');
     
     if (gesture === 'PINCH') {
         cursorDiv.classList.add('grabbing');
-        if (STATE.hoveredPhoto && STATE.current === 'SCATTER') {
-            // 只有当前有悬停目标时，捏合才生效
+        // 仅在SCATTER状态且有悬停对象，或者想从FOCUS切回时处理逻辑
+        // 这里简化：只有在SCATTER时能抓取
+        if (STATE.current === 'SCATTER' && STATE.hoveredPhoto) {
             const targetGroup = STATE.hoveredPhoto.parentGroup;
             if (targetGroup !== STATE.focusedPhoto) {
                 transitionToFocus(targetGroup);
@@ -487,7 +433,6 @@ function updateStateByGesture(gesture) {
         }
     } else {
         cursorDiv.classList.remove('grabbing');
-        
         if (gesture === 'FIST' && STATE.current !== 'TREE') {
             transitionToTree();
             statusText.innerText = "TREE (MERGED)";
@@ -500,14 +445,13 @@ function updateStateByGesture(gesture) {
 }
 
 /**
- * 5. 交互逻辑 (Hover 与 Focus)
+ * 逻辑核心：悬停检测
  */
 function checkHover() {
     if (STATE.current !== 'SCATTER' || !STATE.handDetected) {
         if (STATE.hoveredPhoto) clearHover();
         return;
     }
-
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(photos);
 
@@ -516,9 +460,8 @@ function checkHover() {
         if (STATE.hoveredPhoto !== hitObj) {
             clearHover();
             STATE.hoveredPhoto = hitObj;
-            
-            // Hover 视觉反馈：变红 + 稍微变大
-            gsap.to(hitObj.material.color, { r: 1, g: 0.2, b: 0.2, duration: 0.3 });
+            // 悬停反馈：稍微变红，变大
+            gsap.to(hitObj.material.color, { r: 1, g: 0.5, b: 0.5, duration: 0.3 });
             gsap.to(hitObj.parentGroup.scale, { x: 1.2, y: 1.2, z: 1.2, duration: 0.3 });
         }
     } else {
@@ -528,35 +471,52 @@ function checkHover() {
 
 function clearHover() {
     if (STATE.hoveredPhoto) {
-        // 恢复白色
+        // 恢复Frame颜色
         gsap.to(STATE.hoveredPhoto.material.color, { r: 1, g: 1, b: 1, duration: 0.3 });
-        // 恢复原始大小 (除非它是当前Focus的对象)
-        if (STATE.hoveredPhoto.parentGroup !== STATE.focusedPhoto) {
-             gsap.to(STATE.hoveredPhoto.parentGroup.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
-        }
+        // 恢复大小
+        gsap.to(STATE.hoveredPhoto.parentGroup.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
         STATE.hoveredPhoto = null;
     }
+}
+
+/**
+ * 状态转换逻辑
+ */
+function restorePhotoBrightness() {
+    // 恢复所有照片亮度为纯白（高亮）
+    photos.forEach(frame => {
+        const group = frame.parentGroup;
+        const photoMesh = group.getObjectByName("photoContent");
+        if(photoMesh) {
+            gsap.to(photoMesh.material.color, { r: 1, g: 1, b: 1, duration: 0.5 });
+        }
+    });
 }
 
 function transitionToTree() {
     STATE.current = 'TREE';
     resetFocus();
+    restorePhotoBrightness(); // 恢复亮度
     gsap.to(treeSystem.material.uniforms.mixVal, { value: 0.0, duration: 2, ease: "power2.inOut" });
-    photos.forEach(mesh => {
-        const p = mesh.parentGroup;
+    
+    photos.forEach(frame => {
+        const p = frame.parentGroup;
         gsap.to(p.position, { x: p.userData.treePos.x, y: p.userData.treePos.y, z: p.userData.treePos.z, duration: 1.5, ease: "power2.inOut" });
         gsap.to(p.rotation, { x: p.userData.treeRot.x, y: p.userData.treeRot.y, z: p.userData.treeRot.z, duration: 1.5 });
         p.lookAt(0, p.position.y, 0); 
     });
+    // 相机归位
     gsap.to(camera.position, { x: 0, y: 20, z: 80, duration: 2 });
 }
 
 function transitionToScatter() {
     STATE.current = 'SCATTER';
     resetFocus();
+    restorePhotoBrightness(); // 恢复亮度
     gsap.to(treeSystem.material.uniforms.mixVal, { value: 1.0, duration: 2, ease: "power2.out" });
-    photos.forEach(mesh => {
-        const p = mesh.parentGroup;
+    
+    photos.forEach(frame => {
+        const p = frame.parentGroup;
         gsap.to(p.position, { x: p.userData.scatterPos.x, y: p.userData.scatterPos.y, z: p.userData.scatterPos.z, duration: 2, ease: "power2.out" });
         gsap.to(p.rotation, { x: p.userData.scatterRot.x, y: p.userData.scatterRot.y, z: p.userData.scatterRot.z, duration: 2 });
     });
@@ -565,22 +525,48 @@ function transitionToScatter() {
 function transitionToFocus(photoGroup) {
     STATE.current = 'FOCUS';
     STATE.focusedPhoto = photoGroup;
-    document.getElementById('state-text').innerText = "FOCUS (MEMORY)";
+    document.getElementById('state-text').innerText = "FOCUS (VIEWING)";
 
-    const targetPos = new THREE.Vector3(0, 0, -15); 
-    targetPos.applyMatrix4(camera.matrixWorld);
+    // --- 核心修改：计算位置与曝光 ---
 
+    // 1. 计算目标位置：相机正前方固定距离
+    const distance = 40; // 放在相机前方40单位
+    const vFOV = THREE.MathUtils.degToRad(camera.fov); 
+    const visibleHeight = 2 * Math.tan( vFOV / 2 ) * distance; // 该距离下的可见高度
+    
+    // 2. 计算缩放：占据屏幕高度的 50%
+    // 拍立得总高度约为 7 (FrameHeight)
+    const targetScale = (visibleHeight * 0.5) / 7;
+    
+    // 3. 计算世界坐标
+    const direction = new THREE.Vector3();
+    camera.getWorldDirection(direction);
+    const targetPos = new THREE.Vector3();
+    targetPos.copy(camera.position).add(direction.multiplyScalar(distance));
+
+    // 4. 执行移动与缩放动画
     gsap.to(photoGroup.position, {
         x: targetPos.x, y: targetPos.y, z: targetPos.z,
         duration: 1, ease: "power3.out",
-        onUpdate: () => photoGroup.lookAt(camera.position)
+        onUpdate: () => { photoGroup.lookAt(camera.position); } // 始终面向相机
     });
-    gsap.to(photoGroup.scale, { x: 4, y: 4, z: 4, duration: 1 });
+    
+    gsap.to(photoGroup.scale, { 
+        x: targetScale, y: targetScale, z: targetScale, 
+        duration: 1, ease: "elastic.out(1, 0.7)" 
+    });
+
+    // 5. 降低曝光 (变暗) 以看清细节
+    const photoMesh = photoGroup.getObjectByName("photoContent");
+    if(photoMesh) {
+        // 将颜色变暗为原来的 40%，这样在Bloom下就不会发光刺眼了
+        gsap.to(photoMesh.material.color, { r: 0.4, g: 0.4, b: 0.4, duration: 0.5 });
+    }
 }
 
 function resetFocus() {
+    // 离开Focus状态时，不需要立刻做动画，因为TransitionToTree/Scatter会接管位置
     if(STATE.focusedPhoto) {
-        gsap.to(STATE.focusedPhoto.scale, {x:1, y:1, z:1, duration: 0.5});
         STATE.focusedPhoto = null;
     }
 }
@@ -599,17 +585,7 @@ function animate() {
     const time = performance.now() * 0.001;
     
     if(treeSystem) treeSystem.material.uniforms.time.value = time;
-    
-    if(snowSystem) {
-        const positions = snowSystem.geometry.attributes.position.array;
-        for(let i=1; i<positions.length; i+=3) {
-            positions[i] -= 0.2;
-            if(positions[i] < -50) positions[i] = 100;
-        }
-        snowSystem.geometry.attributes.position.needsUpdate = true;
-    }
-
-    // 实时检测悬停 (Hover)
+    if(snowSystem) snowSystem.geometry.attributes.position.needsUpdate = true;
     checkHover();
 
     if (STATE.current !== 'FOCUS') {
@@ -621,7 +597,6 @@ function animate() {
         }
     }
 
-    // 漂浮动画
     if (STATE.current === 'SCATTER') {
         photos.forEach((mesh, i) => {
             const p = mesh.parentGroup;
@@ -641,11 +616,7 @@ function onWindowResize() {
     composer.setSize(window.innerWidth, window.innerHeight);
 }
 
-window.onload = function() {
-    initThree();
-    setupMediaPipe();
-    animate();
-};
+window.onload = function() { initThree(); setupMediaPipe(); animate(); };
 </script>
 </body>
 </html>
