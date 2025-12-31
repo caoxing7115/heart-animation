@@ -4,104 +4,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 跨年盛典 - 动态笔触</title>
+    <title>2026 跨年艺术盛典</title>
     
-    <!-- 加载核心样式与字体 -->
+    <!-- 引入资源 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&family=Noto+Sans+SC:wght@300;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&family=Noto+Sans+SC:wght@100;400;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     
-    <!-- 加载 React 生态（UMD 版本，无需构建） -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #050505;
-            color: #ffffff;
-            font-family: 'Noto Sans SC', sans-serif;
-            overflow: hidden;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
+        :root {
+            --clock-bg: #111;
+            --text-main: #efefef;
         }
 
-        /* 核心视觉：动态艺术笔触 2026 */
-        .art-brush-2026 {
-            font-family: 'Zhi Mang Xing', cursive;
-            font-size: clamp(8rem, 25vw, 24rem);
+        body {
+            margin: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: 'Noto Sans SC', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* --- 翻页时钟 (Flip Card) 样式 --- */
+        .flip-card {
+            background: var(--clock-bg);
+            border-radius: 0.8rem;
+            width: clamp(65px, 16vw, 130px);
+            height: clamp(85px, 22vw, 165px);
             position: relative;
-            display: inline-block;
-            line-height: 0.85;
-            
-            /* 流动彩色油彩 */
-            background: linear-gradient(
-                135deg, 
-                #ff0000 0%, 
-                #ffcc00 15%, 
-                #ff6600 30%, 
-                #00a2ff 50%, 
-                #ff0000 70%,
-                #ffcc00 100%
-            );
-            background-size: 300% 300%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', sans-serif;
+            font-size: clamp(3rem, 10vw, 6.5rem);
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0.4rem;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.9);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .flip-card::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 2px;
+            background: rgba(0,0,0,0.85);
+            z-index: 5;
+        }
+
+        /* --- 开篇 2026 辉光字体 (图3风格) --- */
+        .opening-2026 {
+            font-family: 'Zhi Mang Xing', cursive;
+            font-size: clamp(6rem, 20vw, 12rem);
+            background: linear-gradient(to right, #ff6a00, #ee9944, #88ccff, #0099ff);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            
-            /* 关键：SVG 艺术滤镜叠加厚重阴影 */
-            filter: 
-                url(#brush-texture)
-                drop-shadow(4px 4px 0px rgba(0,0,0,0.8))
-                drop-shadow(0px 0px 35px rgba(255, 80, 0, 0.4));
-            
-            animation: 
-                color-flow 12s ease infinite,
-                gentle-float 6s ease-in-out infinite;
-            
-            padding: 20px 40px;
-            margin: -20px -40px;
-            z-index: 10;
+            filter: drop-shadow(0 0 25px rgba(255,120,0,0.65));
+            animation: pulse-glow 3s ease-in-out infinite alternate;
         }
 
-        @keyframes color-flow {
+        @keyframes pulse-glow {
+            from { filter: drop-shadow(0 0 15px rgba(255,120,0,0.45)); transform: scale(1); }
+            to { filter: drop-shadow(0 0 40px rgba(255,120,0,0.9)); transform: scale(1.02); }
+        }
+
+        /* --- 结果页 2026 油彩笔触 (图2风格) --- */
+        .result-2026 {
+            font-family: 'Zhi Mang Xing', cursive;
+            font-size: clamp(8rem, 26vw, 22rem);
+            line-height: 0.8;
+            background: linear-gradient(165deg, #ff1100 0%, #ff7700 25%, #ffcc00 45%, #ff4400 65%, #1e90ff 80%, #1122ff 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: url(#oil-brush) drop-shadow(0 0 40px rgba(255,60,0,0.35));
+            animation: move-gradient 8s linear infinite;
+        }
+
+        @keyframes move-gradient {
             0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
         }
 
-        @keyframes gentle-float {
-            0%, 100% { transform: translateY(0) rotate(-0.5deg); }
-            50% { transform: translateY(-10px) rotate(0.5deg); }
-        }
-
-        /* 背景发光层 */
-        .brush-glow {
-            position: absolute;
+        .video-container {
+            position: fixed;
             inset: 0;
-            z-index: -1;
-            -webkit-text-stroke: 8px rgba(255, 100, 0, 0.1);
-            filter: blur(15px);
-            opacity: 0.5;
+            z-index: 100;
+            background: #000;
         }
 
-        .glass-ui {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
+        .glass-panel {
+            background: rgba(10, 10, 10, 0.55);
+            backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 2.5rem;
+            padding: 2.5rem;
+            width: 90%;
+            max-width: 480px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            border-radius: 2rem;
         }
 
-        .fade-entry {
-            animation: fadeIn 1.5s ease-out forwards;
+        .btn-gradient {
+            background: linear-gradient(90deg, #ff4d4d, #ff8c00);
+            box-shadow: 0 4px 15px rgba(255, 77, 77, 0.4);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .btn-gradient:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(255, 77, 77, 0.5);
         }
 
         ::-webkit-scrollbar { display: none; }
@@ -116,196 +136,261 @@
 </script>
 </head>
 <body>
-    <!-- SVG 滤镜：定义毛笔枯笔的质感 -->
+    <!-- SVG 滤镜：油彩笔触特效 -->
     <svg style="position: absolute; width: 0; height: 0;">
-        <filter id="brush-texture">
-            <!-- 增加随机噪点模拟纸张和笔触边缘 -->
-            <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" />
-            <!-- 稍微增强亮度 -->
-            <feComponentTransfer>
-                <feFuncA type="linear" slope="1.1" />
-            </feComponentTransfer>
-        </filter>
+        <defs>
+            <filter id="oil-brush" x="-20%" y="-20%" width="140%" height="140%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="4" result="noise" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="22" />
+                <feGaussianBlur stdDeviation="0.45" />
+            </filter>
+        </defs>
     </svg>
 
     <div id="root"></div>
 
-    <!-- Babel 实时编译 JSX -->
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- 烟火系统 ---
-        const Fireworks = () => {
-            const canvasRef = useRef(null);
-            const particles = useRef([]);
+        const BLESSINGS = [
+            { cn: "万物更新，旧疾当愈，长安常安。", en: "Everything is renewed, old wounds heal, may you find lasting peace.", icon: "🌱" },
+            { cn: "愿新年，胜旧年，多喜乐，长安宁。", en: "May the new year be better than the last, full of joy and tranquility.", icon: "🎊" },
+            { cn: "往事清零，爱恨随意，迎接新光。", en: "Reset the past, let love and hate go, embrace the new light.", icon: "✨" },
+            { cn: "岁岁常欢愉，年年皆胜意。", en: "May your years be full of joy and all your wishes come true.", icon: "🍊" },
+            { cn: "祝你2026：眼里有星辰，心中有大海。", en: "In 2026: May your eyes hold stars and your heart hold the sea.", icon: "🌊" },
+            { cn: "愿今年所有的遗憾，都是明年惊喜的铺垫。", en: "May all of this year's regrets pave the way for next year's surprises.", icon: "🎁" },
+            { cn: "新的一年，奔赴山海，保持热爱。", en: "In the new year, head for the mountains and seas, keep your passion.", icon: "🏔️" },
+            { cn: "凛冬散尽，星河长明，新的一年万事顺遂。", en: "Winter fades, the galaxy shines bright, everything will go well.", icon: "🌌" },
+            { cn: "所得皆所愿，所行皆坦途。", en: "May all you gain be what you desire, and all your paths be smooth.", icon: "🛣️" },
+            { cn: "家人闲坐，灯火可亲，岁岁平安。", en: "Family sitting together, cozy lights, peace year after year.", icon: "🏡" },
+            { cn: "新年快乐，愿你所有的努力都不被辜负。", en: "Happy New Year, may all your efforts be rewarded.", icon: "💪" },
+            { cn: "愿2026年的你，活得像光，灿烂夺目。", en: "May you live like light in 2026, brilliant and eye-catching.", icon: "☀️" },
+            { cn: "山高水长，愿你我顶峰相见。", en: "Long is the journey, may we meet at the summit.", icon: "🚩" },
+            { cn: "有趣有盼，无灾无难。", en: "Stay curious, stay hopeful, may you be free from disaster.", icon: "🌈" },
+            { cn: "祝2026：顺风顺水，一路长虹。", en: "Wish 2026: Smooth sailing and lasting success.", icon: "🚢" },
+            { cn: "善良，勇敢，优秀，绝不妥协。", en: "Be kind, brave, excellent, and never compromise.", icon: "🛡️" },
+            { cn: "2026，去做那个最耀眼的自己。", en: "2026, go and be your most dazzling self.", icon: "💎" },
+            { cn: "愿你此生尽兴，赤诚善良。", en: "May you live your life to the fullest, sincere and kind.", icon: "❤️" },
+            { cn: "愿新年，有趣，有盼，有未来。", en: "May the New Year have fun, hope, and a future.", icon: "🚀" },
+            { cn: "新的一年，自由且浪漫。", en: "May your new year be free and romantic.", icon: "🕊️" },
+            { cn: "生活明朗，万物可爱。", en: "Life is bright, everything is lovely.", icon: "🐾" },
+            { cn: "跨过星河，迈向未来。", en: "Cross the galaxy and step into the future.", icon: "🛸" },
+            { cn: "愿所有的好运都和你环环相扣。", en: "May all good luck be interlinked with you.", icon: "🔗" },
+            { cn: "不负热爱，奔向未来。", en: "Live up to your love, run towards the future.", icon: "⚡" },
+            { cn: "愿新年，常伴左右，共话佳年。", en: "May we stay together, sharing the beautiful year.", icon: "🫂" },
+            { cn: "岁岁年年，如愿以偿。", en: "Year after year, may all your wishes be granted.", icon: "🪄" },
+            { cn: "祝你：前程似锦，不负韶华。", en: "Wish you a bright future, live up to your prime.", icon: "🎓" },
+            { cn: "凡是过往，皆为序章。", en: "What's past is prologue.", icon: "📖" },
+            { cn: "星辰大海，远方有梦。", en: "Stars and seas, dreams are far away.", icon: "🔭" },
+            { cn: "祝你：心有所向，无畏风霜。", en: "May you have a goal and fear no storm.", icon: "❄️" },
+            { cn: "岁月平缓，山河无恙。", en: "Time is gentle, mountains and rivers are safe.", icon: "🏞️" },
+            { cn: "一岁一礼，一寸欢喜。", en: "A gift for every year, joy in every step.", icon: "🎀" },
+            { cn: "祝你：眼里有火，心中有光。", en: "May there be fire in your eyes and light in your heart.", icon: "🔥" },
+            { cn: "平安喜乐，万事胜意。", en: "Peace and joy, everything better than expected.", icon: "🎋" },
+            { cn: "2026，开启无限可能。", en: "2026, unlock infinite possibilities.", icon: "🗝️" },
+            { cn: "愿新年：无忧无虑，所得皆愿。", en: "May the new year be carefree, getting all you want.", icon: "🧸" },
+            { cn: "祝你：步步高升，大吉大利。", en: "Wish you: Rising step by step, great luck.", icon: "🍊" },
+            { cn: "新年愿望：平安喜乐，有钱有你。", en: "New Year Wish: Peace, joy, wealth, and you.", icon: "💖" },
+            { cn: "愿2026：山河入梦，烟火如歌。", en: "May 2026: Mountains into dreams, fireworks like songs.", icon: "🎶" },
+            { cn: "祝你：顺遂圆满，万象更新。", en: "Wish you: Smooth success, everything renewed.", icon: "🔄" },
+            { cn: "愿你：活成自己喜欢的样子。", en: "May you live as the version you like best.", icon: "🎭" },
+            { cn: "愿你：所得皆所期，所求皆如愿。", en: "May what you get be what you expect.", icon: "🌠" },
+            { cn: "年年景不改，岁岁人常在。", en: "The scenery remains, may we stay together forever.", icon: "🤝" },
+            { cn: "2026，愿你的世界繁花似锦。", en: "2026, may your world bloom like flowers.", icon: "🌻" },
+            { cn: "日子红红火火，生活平平安安。", en: "Days of prosperity and a life of peace.", icon: "🧨" },
+            { cn: "跨过星河，迈向未来。", en: "Cross the galaxy and step into the future.", icon: "🛸" },
+            { cn: "烟火人间，岁岁年年。", en: "Fireworks in the world, year after year.", icon: "🎆" },
+            { cn: "生活明朗，万物可爱。", en: "Life is bright, everything is lovely.", icon: "🐾" },
+            { cn: "愿你新的一年，自由且浪漫。", en: "May your new year be free and romantic.", icon: "🕊️" },
+            { cn: "除夕跨年，万象更新。", en: "New Year's Eve, everything is fresh and new.", icon: "🎇" }
+        ];
 
+        // --- 全局烟花组件 ---
+        const GlobalFireworks = ({ intensity = 0.05 }) => {
+            const canvasRef = useRef(null);
             useEffect(() => {
                 const canvas = canvasRef.current;
                 const ctx = canvas.getContext('2d');
-                let animationId;
-
-                const resize = () => {
-                    canvas.width = window.innerWidth;
-                    canvas.height = window.innerHeight;
-                };
-
-                const createPartice = (x, y, color) => {
-                    const count = 80;
-                    for (let i = 0; i < count; i++) {
+                let particles = [];
+                const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+                
+                const createFirework = (x, y) => {
+                    const colors = ['#ff4d00', '#ffcc00', '#0099ff', '#ffffff', '#ff0055'];
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    for (let i = 0; i < 50; i++) {
                         const angle = Math.random() * Math.PI * 2;
-                        const velocity = Math.random() * 6 + 2;
-                        particles.current.push({
+                        const speed = Math.random() * 4 + 1;
+                        particles.push({
                             x, y,
-                            vx: Math.cos(angle) * velocity,
-                            vy: Math.sin(angle) * velocity,
-                            color,
-                            alpha: 1,
-                            life: Math.random() * 0.01 + 0.005
+                            vx: Math.cos(angle) * speed,
+                            vy: Math.sin(angle) * speed,
+                            a: 1,
+                            c: color
                         });
                     }
                 };
 
-                const update = () => {
-                    ctx.fillStyle = 'rgba(5, 5, 5, 0.2)';
+                const loop = () => {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                    particles.current.forEach((p, i) => {
-                        p.x += p.vx; p.y += p.vy;
-                        p.vy += 0.05; // 重力
-                        p.alpha -= p.life;
-                        
-                        ctx.globalAlpha = p.alpha;
-                        ctx.fillStyle = p.color;
+                    
+                    particles = particles.filter(p => p.a > 0.05);
+                    particles.forEach(p => {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.05;
+                        p.a -= 0.015;
+                        ctx.globalAlpha = p.a;
+                        ctx.fillStyle = p.c;
                         ctx.beginPath();
-                        ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
+                        ctx.arc(p.x, p.y, 1.2, 0, Math.PI * 2);
                         ctx.fill();
                     });
 
-                    particles.current = particles.current.filter(p => p.alpha > 0);
-                    
-                    if (Math.random() < 0.03) {
-                        const x = Math.random() * canvas.width;
-                        const y = Math.random() * canvas.height * 0.4;
-                        const colors = ['#ff0000', '#ffd700', '#ff8c00', '#00e1ff', '#ffffff'];
-                        createPartice(x, y, colors[Math.floor(Math.random() * colors.length)]);
+                    if (Math.random() < intensity) {
+                        createFirework(Math.random() * canvas.width, Math.random() * canvas.height * 0.7);
                     }
-
-                    animationId = requestAnimationFrame(update);
+                    requestAnimationFrame(loop);
                 };
 
                 window.addEventListener('resize', resize);
                 resize();
-                update();
+                loop();
+                return () => window.removeEventListener('resize', resize);
+            }, [intensity]);
 
-                const handleClick = (e) => {
-                    const x = e.clientX || e.touches[0].clientX;
-                    const y = e.clientY || e.touches[0].clientY;
-                    createPartice(x, y, '#ffcc00');
-                };
-
-                window.addEventListener('mousedown', handleClick);
-                window.addEventListener('touchstart', handleClick);
-
-                return () => {
-                    window.removeEventListener('resize', resize);
-                    cancelAnimationFrame(animationId);
-                    window.removeEventListener('mousedown', handleClick);
-                    window.removeEventListener('touchstart', handleClick);
-                };
-            }, []);
-
-            return <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" />;
+            return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none -z-10 bg-black" />;
         };
 
-        // --- 倒计时 ---
-        const Countdown = () => {
-            const [time, setTime] = useState({ d: 0, h: 0, m: 0, s: 0 });
+        // --- 翻页时钟逻辑 ---
+        const FlipClock = () => {
+            const [timeLeft, setTimeLeft] = useState({ d: '0', h: '00', m: '00', s: '00' });
+            
             useEffect(() => {
                 const timer = setInterval(() => {
-                    const diff = new Date('2026-01-01T00:00:00').getTime() - Date.now();
-                    if (diff <= 0) return clearInterval(timer);
-                    setTime({
-                        d: Math.floor(diff / 86400000),
-                        h: Math.floor((diff % 86400000) / 3600000),
-                        m: Math.floor((diff % 3600000) / 60000),
-                        s: Math.floor((diff % 60000) / 1000)
-                    });
+                    const diff = new Date('2026-01-01T00:00:00') - new Date();
+                    if (diff <= 0) {
+                        setTimeLeft({ d: '0', h: '00', m: '00', s: '00' });
+                    } else {
+                        setTimeLeft({
+                            d: String(Math.floor(diff / 86400000)),
+                            h: String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0'),
+                            m: String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0'),
+                            s: String(Math.floor((diff % 60000) / 1000)).padStart(2, '0')
+                        });
+                    }
                 }, 1000);
                 return () => clearInterval(timer);
             }, []);
 
             return (
-                <div className="flex space-x-6 text-orange-500/80 font-bold tracking-widest text-sm sm:text-lg">
-                    <span>{time.d} 天</span>
-                    <span>{time.h} 时</span>
-                    <span>{time.m} 分</span>
-                    <span>{time.s} 秒</span>
+                <div className="flex flex-col items-center animate-in zoom-in duration-1000">
+                    <div className="flex space-x-2 sm:space-x-4 mb-6">
+                        <div className="flip-card"><span>{timeLeft.h}</span></div>
+                        <div className="flip-card"><span>{timeLeft.m}</span></div>
+                        <div className="flip-card"><span>{timeLeft.s}</span></div>
+                    </div>
+                    <div className="text-orange-500/90 tracking-[0.4em] font-black text-sm sm:text-lg uppercase">
+                        {timeLeft.d} DAYS • {timeLeft.h} HOURS • {timeLeft.m} MINS • {timeLeft.s} SECS
+                    </div>
                 </div>
             );
         };
 
-        // --- 主程序 ---
+        // --- 主页面流转 ---
         const App = () => {
+            const [scene, setScene] = useState('opening'); // opening, video, result
             const [name, setName] = useState('');
-            const [submitted, setSubmitted] = useState(false);
+            const [wish, setWish] = useState(null);
+
+            const handleGo = () => {
+                if (!name.trim()) return;
+                setWish(BLESSINGS[Math.floor(Math.random() * BLESSINGS.length)]);
+                setScene('video');
+            };
 
             return (
-                <div className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden px-4">
-                    <Fireworks />
+                <div className="relative w-full h-screen overflow-hidden">
+                    {/* 开篇和结果页都有烟花背景 */}
+                    {(scene === 'opening' || scene === 'result') && (
+                        <GlobalFireworks intensity={scene === 'opening' ? 0.04 : 0.08} />
+                    )}
+                    
+                    {/* Scene 1: 开篇 (烟花 + 辉光标题 + 翻页时钟) */}
+                    {scene === 'opening' && (
+                        <div className="flex flex-col items-center justify-center h-full space-y-12 animate-in fade-in duration-1000 px-4">
+                            <h1 className="opening-2026">2026</h1>
+                            
+                            <FlipClock />
 
-                    <div className="relative z-10 flex flex-col items-center max-w-4xl w-full text-center">
-                        <div className="mb-[-1rem] sm:mb-[-3rem] fade-entry" style={{animationDelay: '0.2s'}}>
-                            <p className="text-white/30 text-[10px] sm:text-xs uppercase tracking-[1.5em] ml-4">Infinite Journey</p>
-                        </div>
-
-                        <div className="relative fade-entry" style={{animationDelay: '0.4s'}}>
-                            <h1 className="art-brush-2026">2026</h1>
-                            <div className="brush-glow" aria-hidden="true">2026</div>
-                        </div>
-
-                        <div className="fade-entry" style={{animationDelay: '0.6s'}}>
-                            <Countdown />
-                        </div>
-
-                        <div className="mt-12 w-full max-w-sm fade-entry" style={{animationDelay: '0.8s'}}>
-                            {!submitted ? (
-                                <form 
-                                    onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }}
-                                    className="glass-ui p-8 flex flex-col space-y-5"
+                            <div className="glass-panel text-center space-y-6">
+                                <h2 className="text-white/70 text-lg font-bold tracking-[0.4em] uppercase">迎接您的跨年时刻</h2>
+                                <input 
+                                    type="text"
+                                    maxLength={12}
+                                    placeholder="输入您的姓名"
+                                    className="w-full bg-white/5 border border-white/10 py-4 rounded-xl text-center text-2xl focus:outline-none focus:border-orange-500/50 transition-all font-bold placeholder:font-normal placeholder:opacity-30"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                />
+                                <button 
+                                    onClick={handleGo}
+                                    className="w-full btn-gradient py-4 rounded-xl font-black text-lg tracking-[0.5em] text-white uppercase"
                                 >
-                                    <h2 className="text-lg font-bold tracking-widest text-white/80">迎接您的 2026</h2>
-                                    <input 
-                                        type="text" 
-                                        required
-                                        placeholder="输入您的姓名" 
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center focus:outline-none focus:ring-1 focus:ring-orange-500/50"
-                                    />
-                                    <button className="bg-gradient-to-r from-red-600 to-orange-500 text-white font-bold py-3 rounded-xl hover:scale-105 transition-transform active:scale-95">
-                                        生成新年寄语
-                                    </button>
-                                </form>
-                            ) : (
-                                <div className="glass-ui p-10 space-y-6 animate-in zoom-in duration-500">
-                                    <div className="text-orange-500 text-2xl"><i className="fa-solid fa-feather-pointed"></i></div>
-                                    <p className="text-xl sm:text-2xl font-bold leading-relaxed text-white/90">
-                                        “ {name}，<br/>
-                                        2026 年的宣纸已铺就，<br/>
-                                        愿你执笔如龙，<br/>
-                                        划破长空，自成一派。”
-                                    </p>
-                                    <button onClick={() => setSubmitted(false)} className="text-[10px] text-white/20 hover:text-white uppercase tracking-[0.5em] underline">
-                                        Back
-                                    </button>
-                                </div>
-                            )}
+                                    开启新年卷轴
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
-                    <div className="fixed bottom-8 text-[9px] text-white/10 tracking-[1em] uppercase select-none pointer-events-none">
-                        Creative Generative Art • Happy New Year 2026
+                    {/* Scene 2: 视频过渡 */}
+                    {scene === 'video' && (
+                        <div className="video-container animate-in fade-in duration-500">
+                            <video 
+                                autoPlay 
+                                playsInline 
+                                className="w-full h-full object-cover"
+                                onEnded={() => setScene('result')}
+                            >
+                                <source src="12月31日.mp4" type="video/mp4" />
+                            </video>
+                        </div>
+                    )}
+
+                    {/* Scene 3: 结果展示 (图2重彩油墨风格) */}
+                    {scene === 'result' && (
+                        <div className="flex flex-col items-center justify-center h-full text-center p-6 animate-in zoom-in fade-in duration-1000">
+                            <div className="mb-[-4rem] opacity-30 tracking-[2em] text-[10px] uppercase ml-8 select-none">Infinite Journey</div>
+                            <h1 className="result-2026">2026</h1>
+
+                            <div className="glass-panel mt-12 space-y-8 !max-w-xl animate-in slide-in-from-bottom-20 duration-1000 delay-300">
+                                <div className="text-7xl drop-shadow-lg">{wish.icon}</div>
+                                <div className="space-y-4">
+                                    <p className="text-2xl sm:text-4xl font-black text-white leading-tight tracking-wide drop-shadow-md">
+                                        “ {wish.cn} ”
+                                    </p>
+                                    <p className="text-sm sm:text-base text-white/40 italic font-light tracking-wider leading-relaxed">
+                                        {wish.en}
+                                    </p>
+                                </div>
+                                <div className="pt-6 border-t border-white/5">
+                                    <p className="text-orange-500/80 font-bold text-xs tracking-[0.4em] uppercase italic">
+                                        Dedicated to {name}
+                                    </p>
+                                </div>
+                                <button 
+                                    onClick={() => setScene('opening')}
+                                    className="text-[10px] text-white/20 hover:text-white/60 tracking-[0.8em] transition-all uppercase"
+                                >
+                                    [ 返回起点 ]
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 页脚装饰 */}
+                    <div className="fixed bottom-6 w-full text-center text-[8px] text-white/5 tracking-[2.5em] pointer-events-none uppercase">
+                        Cinematic Visuals • Happy New Year 2026
                     </div>
                 </div>
             );
