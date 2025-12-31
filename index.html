@@ -430,30 +430,18 @@
         setVideoMuted(true);
       };
 
-      // Fixed Export Card
+      // Fixed Export Card (Simplified Logic based on user feedback)
       const exportCard = async () => {
         if (!cardRef.current) return;
-        try {
-          // Add config for better rendering and CORS
-          const canvas = await window.html2canvas(cardRef.current, { 
-            scale: 2, 
-            useCORS: true, 
-            backgroundColor: '#050a14', 
-            allowTaint: true 
-          });
-          const link = document.createElement('a');
-          link.href = canvas.toDataURL('image/png');
-          link.download = `祝福卡-${name || 'Friend'}-2026.png`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } catch (err) { 
-          console.error("Export failed", err); 
-          alert("保存失败，请检查浏览器权限或尝试截图。");
-        }
+        // use html2canvas (already loaded)
+        // using window.html2canvas to ensure we access the global library
+        const canvas = await window.html2canvas(cardRef.current, { scale: 2, backgroundColor: null });
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = `祝福卡-${name || 'Friend'}-2026.png`;
+        a.click();
       };
 
-      // Fixed Share Card
       const shareCard = async () => {
         if (navigator.share && cardRef.current) {
           try {
