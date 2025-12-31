@@ -1,115 +1,482 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>2026 跨年艺术盛典 | Cinematic Experience</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>2026 跨年艺术盛典 | Cinematic Experience</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&family=Noto+Sans+SC:wght@300;500;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+  <!-- Tailwind + Icons + Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&family=Noto+Sans+SC:wght@300;500;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
 
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-<style>
-/* —— 只新增，不破坏你原样式 —— */
-.exporting * {
-  animation: none !important;
-  filter: none !important;
-}
-</style>
+  <style>
+    :root {
+      --accent: #ff4d00;
+      --glass-bg: rgba(8,8,8,0.64);
+      --text-main: #f7f7f7;
+    }
+    html,body,#root { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(ellipse at 10% 10%, rgba(10,20,45,0.6), transparent 15%),
+                  radial-gradient(ellipse at 90% 90%, rgba(6,10,20,0.45), transparent 15%),
+                  #000;
+      color: var(--text-main);
+      font-family: 'Noto Sans SC', sans-serif;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      overflow: hidden;
+    }
+
+    /* film grain */
+    .film-grain {
+      position: fixed; inset: 0; z-index: 60;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='2'/%3E%3C/feTurbulence%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      opacity: 0.06;
+    }
+
+    /* opening 2026 headline */
+    .opening-2026 {
+      font-family: 'Zhi Mang Xing', cursive;
+      font-weight: 700;
+      letter-spacing: -3px;
+      display:inline-block;
+      background: linear-gradient(135deg,#ff8c00 0%, #ffd700 35%, #00c8ff 75%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 8px 28px rgba(255,100,30,0.35));
+      animation: breathe 4s ease-in-out infinite alternate;
+    }
+    @keyframes breathe { from{ transform: scale(1);} to{ transform: scale(1.035);} }
+
+    /* glass card */
+    .glass {
+      background: var(--glass-bg);
+      border-radius: 22px;
+      padding: 28px;
+      border: 1px solid rgba(255,255,255,0.04);
+      backdrop-filter: blur(18px) saturate(140%);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+    }
+
+    .input-elegant{
+      width:100%;
+      padding:16px 18px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.04);
+      text-align:center;
+      font-weight:700;
+      font-size:1.05rem;
+      color:var(--text-main);
+    }
+    .input-elegant:focus{ outline:none; box-shadow:0 0 26px rgba(255,77,0,0.12); border-color:var(--accent); background: rgba(255,255,255,0.06); }
+
+    .btn-action {
+      display:inline-flex; gap:10px; align-items:center; justify-content:center;
+      background: linear-gradient(90deg,#ff4500,#ff8c00);
+      padding:12px 20px; border-radius:12px; font-weight:900; letter-spacing:0.25em; text-transform:uppercase;
+      cursor:pointer; border: none; color:#fff;
+    }
+    .btn-icon {
+      background: rgba(255,255,255,0.08); padding:8px; border-radius:10px;
+    }
+
+    /* flip card */
+    .flip-plate {
+      display:flex; gap:12px; align-items:center; justify-content:center;
+      perspective: 1000px;
+      user-select: none;
+    }
+    .flip-digit {
+      width: clamp(64px, 16vw, 140px);
+      height: clamp(84px, 22vw, 180px);
+      border-radius: 14px;
+      position: relative;
+      background: linear-gradient(180deg,#111,#070707);
+      border: 1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.8), inset 0 6px 12px rgba(255,255,255,0.02);
+      display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono', monospace; font-size: clamp(2.2rem, 8.5vw, 6rem); font-weight:800; color:var(--text-main);
+      overflow: hidden;
+    }
+
+    /* flipping animation: we create front/back panels */
+    .digit-inner { position: absolute; inset: 0; display:flex; flex-direction:column; }
+    .digit-top, .digit-bottom { height:50%; display:flex; align-items:center; justify-content:center; padding:8px; box-sizing:border-box; overflow:hidden; }
+    .digit-top { border-bottom: 1px solid rgba(255,255,255,0.03); transform-origin: bottom; }
+    .digit-bottom { transform-origin: top; }
+
+    .flip-anim .digit-top { animation: flipTop 560ms cubic-bezier(.2,.9,.2,1) forwards; }
+    .flip-anim .digit-bottom { animation: flipBottom 560ms cubic-bezier(.2,.9,.2,1) forwards; }
+    @keyframes flipTop { 0%{ transform: rotateX(0deg);} 100%{ transform: rotateX(-90deg); } }
+    @keyframes flipBottom { 0%{ transform: rotateX(90deg);} 100%{ transform: rotateX(0deg);} }
+
+    /* result title splash */
+    .result-2026 {
+      font-family: 'Zhi Mang Xing', cursive;
+      font-size: clamp(4rem, 20vw, 16rem);
+      background: linear-gradient(165deg,#ff3a00 0%, #ffd700 30%, #1e90ff 80%);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      filter: url(#ultra-oil-brush) drop-shadow(0 12px 36px rgba(0,0,0,0.6));
+      animation: colorFlow 10s linear infinite;
+      line-height:0.85;
+    }
+    @keyframes colorFlow { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
+
+    /* small helpers */
+    .sr-only{ position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden; }
+    .muted { opacity: 0.6; }
+    .pointer { cursor:pointer; }
+    .small-note { font-size: 12px; color: rgba(255,255,255,0.45); }
+
+    /* responsive tweaks */
+    @media (max-width:640px){
+      .glass { padding: 18px; border-radius: 16px; }
+      .opening-2026 { font-size: 96px; }
+    }
+  </style>
+
+  <!-- tiny SVG filter for result text (oil brush) -->
+  <svg style="position:absolute;width:0;height:0" aria-hidden="true">
+    <defs>
+      <filter id="ultra-oil-brush" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="4" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="20" />
+        <feGaussianBlur stdDeviation="0.4"/>
+      </filter>
+    </defs>
+  </svg>
 </head>
 
 <body>
-<div id="root"></div>
+  <div class="film-grain" aria-hidden="true"></div>
 
-<audio id="bgm" preload="auto" muted>
-  <!-- ⚠️ 换成你自己的 raw 地址 -->
-  <source src="https://github.com/caoxing7115/heart-animation/blob/main/%E6%B5%86%E6%9E%9C.mp3" type="audio/mpeg">
-</audio>
+  <div id="root" class="h-full w-full"></div>
 
-<script type="text/babel">
-const { useState, useEffect, useRef } = React;
+  <script type="text/babel">
+  const { useState, useEffect, useRef } = React;
 
-function App() {
-  const [videoMuted, setVideoMuted] = useState(true);
-  const videoRef = useRef(null);
-  const cardRef = useRef(null);
-  const audioRef = useRef(null);
+  const BLESSINGS = [
+    { cn: "万物更新，旧疾当愈，长安常安。", en: "Renewal for all, healing for old pains, lasting peace for you.", icon: "🌱" },
+    { cn: "往事清零，爱恨随意，迎接新光。", en: "Reset the past, let go of the mundane, embrace the new light.", icon: "✨" },
+    { cn: "祝你2026：眼里有星辰，心中有大海。", en: "2026: May stars light your eyes and the ocean fill your heart.", icon: "🌊" },
+    { cn: "岁岁常欢愉，年年皆胜意。", en: "Joy in every hour, victory in every year.", icon: "🍊" },
+    { cn: "凛冬散尽，星河长明，新年顺遂。", en: "Winter fades, the galaxy remains bright, all goes well.", icon: "🌌" },
+    { cn: "新的一年，奔赴山海，保持热爱。", en: "Heading for the mountains and seas, keep your fire burning.", icon: "🏔️" },
+    { cn: "愿新年，胜旧年，多喜乐，长安宁。", en: "May the new year excel the old, full of joy and tranquility.", icon: "🎊" },
+    { cn: "不期而遇，不言而喻，如期而至。", en: "Unexpected encounters, silent bonds, arriving on schedule.", icon: "⏳" },
+    { cn: "愿你此生尽兴，赤诚善良。", en: "May you live to the fullest, sincere and kind to the core.", icon: "❤️" },
+    { cn: "新的一年，要把开心放在第一位。", en: "In the coming year, prioritize your happiness above all.", icon: "🥳" },
+    { cn: "山高水长，愿你我顶峰相见。", en: "The peak awaits, may we meet there in triumph.", icon: "🚩" },
+    { cn: "所得皆所愿，所行皆坦途。", en: "All gains as desired, all paths smooth and free.", icon: "🛣️" },
+    { cn: "愿2026年的你，活得像光，灿烂夺目。", en: "In 2026, live like light—brilliant and dazzling.", icon: "☀️" },
+    { cn: "不负热爱，奔向未来。", en: "Live up to your passion, sprint toward the future.", icon: "⚡" },
+    { cn: "2026，开启无限可能。", en: "2026: Unlocking infinite possibilities within you.", icon: "🗝️" },
+    { cn: "烟火人间，岁岁年年。", en: "Amidst the earthly fireworks, year after year.", icon: "🎆" },
+    { cn: "跨过星河，迈向未来。", en: "Stride across the galaxy into a brand new future.", icon: "🛸" },
+    { cn: "生活明朗，万物可爱。", en: "Life is bright, and all things are endearing.", icon: "🐾" },
+    { cn: "愿新年：无忧无虑，所得皆愿。", en: "May your year be carefree, granting every wish.", icon: "🧸" },
+    { cn: "祝你：眼里有火，心中有光。", en: "Fire in your vision, light in your soul.", icon: "🔥" }
+  ];
 
-  useEffect(() => {
-    audioRef.current = document.getElementById('bgm');
-  }, []);
+  /* ---------- FlipDigit component: animates when value changes ---------- */
+  function FlipDigit({ value }) {
+    const [prev, setPrev] = useState(value);
+    const [anim, setAnim] = useState(false);
 
-  function toggleMute() {
-    const next = !videoMuted;
-    setVideoMuted(next);
+    useEffect(() => {
+      if (value !== prev) {
+        setAnim(true);
+        const t = setTimeout(() => { setAnim(false); setPrev(value); }, 560);
+        return () => clearTimeout(t);
+      }
+    }, [value]);
 
-    if (videoRef.current) {
-      videoRef.current.muted = next;
-    }
-
-    if (!next && audioRef.current) {
-      audioRef.current.muted = false;
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(()=>{});
-    }
-  }
-
-  async function exportCard() {
-    await document.fonts.ready;
-    cardRef.current.classList.add('exporting');
-
-    const canvas = await html2canvas(cardRef.current, {
-      scale: 2,
-      backgroundColor: null,
-      windowWidth: cardRef.current.offsetWidth,
-      windowHeight: cardRef.current.offsetHeight,
-      useCORS: true
-    });
-
-    cardRef.current.classList.remove('exporting');
-
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
-    a.download = '祝福卡-2026.png';
-    a.click();
-  }
-
-  return (
-    <div className="h-screen flex flex-col items-center justify-center gap-6">
-      <video
-        ref={videoRef}
-        muted={videoMuted}
-        autoPlay
-        playsInline
-        className="w-80 rounded-xl"
-      >
-        <source src="12月31日.mp4" type="video/mp4" />
-      </video>
-
-      <button onClick={toggleMute} className="px-4 py-2 bg-orange-500 rounded text-white">
-        {videoMuted ? "🔇" : "🔊"}
-      </button>
-
-      <div
-        ref={cardRef}
-        className="w-80 p-6 rounded-xl bg-orange-500 text-white text-center font-bold text-xl"
-      >
-        万物更新，旧疾当愈，长安常安。
+    return (
+      <div className={"flip-digit " + (anim ? "flip-anim" : "")} aria-hidden>
+        <div className="digit-inner">
+          <div className="digit-top">{anim ? prev : value}</div>
+          <div className="digit-bottom">{anim ? value : prev}</div>
+        </div>
       </div>
+    );
+  }
 
-      <button onClick={exportCard} className="px-4 py-2 bg-black text-white rounded">
-        下载图片
-      </button>
-    </div>
-  );
-}
+  /* ---------- Firework-like background with canvas (subtle) ---------- */
+  function FireworkCanvas({ active }) {
+    const cRef = useRef(null);
+    useEffect(() => {
+      const canvas = cRef.current;
+      if (!canvas || !active) return;
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+      const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+      resize();
+      const loop = () => {
+        ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        particles = particles.filter(p => p.alpha > 0.02);
+        particles.forEach(p => {
+          p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.alpha -= 0.015;
+          ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color;
+          ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+        });
+        if (Math.random() < 0.06) {
+          const x = Math.random()*canvas.width, y = Math.random()*canvas.height*0.6;
+          const colors = ['#ff4d00','#ffd700','#00ccff','#ff77aa','#77ff66'];
+          for (let i=0;i<60;i++){
+            const a = Math.random()*Math.PI*2, s = Math.random()*4+1;
+            particles.push({ x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,alpha:0.9,color:colors[Math.floor(Math.random()*colors.length)],size:1+Math.random()*2 });
+          }
+        }
+        requestAnimationFrame(loop);
+      };
+      window.addEventListener('resize', resize);
+      loop();
+      return () => window.removeEventListener('resize', resize);
+    }, [active]);
+    return <canvas ref={cRef} className="fixed inset-0 -z-10 pointer-events-none" aria-hidden />;
+  }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-</script>
+  /* ---------- Small confetti when result shows ---------- */
+  function Confetti({ playing }) {
+    const cRef = useRef(null);
+    useEffect(() => {
+      const canvas = cRef.current; if (!canvas) return;
+      const ctx = canvas.getContext('2d'); let raf; let pieces = [];
+      const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+      resize();
+      const spawn = () => {
+        const colors = ['#ff4d00','#ffd700','#00ccff','#ffffff','#ff77aa','#77ff66'];
+        for (let i=0;i<80;i++){
+          pieces.push({
+            x: Math.random() * canvas.width,
+            y: -20 - Math.random()*200,
+            vx: (Math.random()-0.5)*3,
+            vy: 1 + Math.random()*3,
+            rot: Math.random()*360,
+            vr: (Math.random()-0.5)*12,
+            w: 6 + Math.random()*10,
+            h: 8 + Math.random()*12,
+            color: colors[Math.floor(Math.random()*colors.length)],
+            life: 0
+          });
+        }
+      };
+      const loop = () => {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        pieces.forEach((p, i) => {
+          p.x += p.vx; p.y += p.vy; p.vy += 0.04; p.rot += p.vr*0.02; p.life++;
+          ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+          ctx.fillStyle = p.color; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+          ctx.restore();
+          if (p.y > canvas.height + 50 || p.life > 400) pieces.splice(i,1);
+        });
+        raf = requestAnimationFrame(loop);
+      };
+      if (playing) { spawn(); loop(); window.addEventListener('resize', resize); }
+      return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); pieces=[]; };
+    }, [playing]);
+
+    return <canvas ref={cRef} className="fixed inset-0 pointer-events-none z-40" aria-hidden />;
+  }
+
+  /* ---------- Main App ---------- */
+  function App(){
+    const [scene, setScene] = useState('opening'); // opening | video | result
+    const [name, setName] = useState('');
+    const [wish, setWish] = useState(null);
+    const [timeLeft, setTimeLeft] = useState({ d:'0', h:'00', m:'00', s:'00' });
+    const [videoMuted, setVideoMuted] = useState(true);
+    const videoRef = useRef(null);
+    const cardRef = useRef(null);
+    const [confettiOn, setConfettiOn] = useState(false);
+
+    useEffect(() => {
+      // countdown
+      const tick = () => {
+        const target = new Date('2026-01-01T00:00:00');
+        const diff = target - new Date();
+        if (diff <= 0) {
+          setTimeLeft({ d:'0', h:'00', m:'00', s:'00' });
+        } else {
+          setTimeLeft({
+            d: String(Math.floor(diff / 86400000)),
+            h: String(Math.floor((diff % 86400000) / 3600000)).padStart(2,'0'),
+            m: String(Math.floor((diff % 3600000) / 60000)).padStart(2,'0'),
+            s: String(Math.floor((diff % 60000) / 1000)).padStart(2,'0'),
+          });
+        }
+      };
+      tick();
+      const id = setInterval(tick, 1000);
+      return () => clearInterval(id);
+    }, []);
+
+    useEffect(() => { // keyboard: Enter triggers
+      const onKey = (e) => {
+        if (e.key === 'Enter') {
+          if (scene === 'opening') startAction();
+        } else if (e.key === 'Escape') {
+          setScene('opening');
+        }
+      };
+      window.addEventListener('keydown', onKey);
+      return () => window.removeEventListener('keydown', onKey);
+    }, [scene, name]);
+
+    function startAction(){
+      if (!name.trim()) return; // keep simple
+      const sel = BLESSINGS[Math.floor(Math.random()*BLESSINGS.length)];
+      setWish(sel);
+      setScene('video');
+      setTimeout(()=> {
+        try { videoRef.current && videoRef.current.play(); } catch(e){}
+      }, 100);
+    }
+
+    function onVideoEnd(){
+      setScene('result');
+      setConfettiOn(true);
+      // stop confetti after ~7s
+      setTimeout(()=>setConfettiOn(false),7000);
+    }
+
+    async function exportCard(){
+      if (!cardRef.current) return;
+      // use html2canvas (already loaded)
+      const canvas = await html2canvas(cardRef.current, { scale: 2, backgroundColor: null });
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `祝福卡-${name || 'Friend'}-2026.png`;
+      a.click();
+    }
+
+    async function shareCard(){
+      if (navigator.share && cardRef.current){
+        try {
+          // try to create blob via canvas
+          const canvas = await html2canvas(cardRef.current, { scale:2, backgroundColor: null });
+          const blob = await new Promise(res=>canvas.toBlob(res, 'image/png'));
+          const filesArray = [ new File([blob], `祝福卡-${name||'Friend'}-2026.png`, { type: blob.type }) ];
+          await navigator.share({ files: filesArray, title: '新年祝福', text: `给 ${name || '你'} 的新年祝福` });
+        } catch (err) {
+          console.warn('share failed', err);
+          alert('当前设备不支持直接分享，已生成图片供下载。');
+          exportCard();
+        }
+      } else {
+        exportCard();
+      }
+    }
+
+    return (
+      <div className="w-full h-full relative">
+        <FireworkCanvas active={scene === 'opening' || scene === 'result'} />
+        <div className="absolute inset-0 flex items-center justify-center p-6">
+          {scene === 'opening' && (
+            <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center gap-8">
+              <h1 className="opening-2026 text-center" style={{ fontSize: 'clamp(48px, 14vw, 120px)' }}>2026</h1>
+
+              <div className="flex flex-col items-center glass">
+                <div className="flip-plate mb-4" role="timer" aria-live="polite" aria-atomic="true">
+                  <FlipDigit value={timeLeft.h} />
+                  <FlipDigit value={timeLeft.m} />
+                  <FlipDigit value={timeLeft.s} />
+                </div>
+
+                <div className="text-sm muted tracking-widest mb-4 text-center">Countdown • {timeLeft.d} Days • {timeLeft.h} : {timeLeft.m} : {timeLeft.s}</div>
+
+                <div className="w-full max-w-md">
+                  <label className="sr-only" htmlFor="nameInput">姓名</label>
+                  <input id="nameInput" className="input-elegant mb-4" placeholder="在此输入您的姓名（最多10字）" maxLength={10}
+                    value={name} onChange={(e)=>setName(e.target.value)} aria-label="输入姓名用于定制祝福" />
+                  <div className="flex gap-3">
+                    <button className="btn-action flex-1" onClick={startAction} aria-label="开启新年寄语">
+                      <span>开启新年寄语</span>
+                    </button>
+                    <button className="btn-action btn-icon" onClick={()=>{ setVideoMuted(v=>!v); setVideoMuted((v)=>!v); }} aria-pressed={videoMuted} title="切换静音">
+                      <i className={"fa "+ (videoMuted ? "fa-volume-xmark" : "fa-volume-high")}></i>
+                    </button>
+                  </div>
+                  <div className="mt-3 small-note text-center">按 Enter 快速启动 • Esc 返回</div>
+                </div>
+              </div>
+              <div className="text-xs text-white/30 uppercase tracking-widest">Art Direction • Happy New Year 2026</div>
+            </div>
+          )}
+
+          {scene === 'video' && (
+            <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+              <div className="absolute top-4 right-4 z-60 flex gap-2">
+                <button className="btn-action btn-icon" onClick={()=>{
+                  if (videoRef.current) {
+                    videoRef.current.muted = !videoRef.current.muted;
+                    setVideoMuted(videoRef.current.muted);
+                  }
+                }} aria-pressed={videoMuted} title="静音/取消静音">
+                  <i className={"fa " + (videoMuted ? "fa-volume-xmark":"fa-volume-high")}></i>
+                </button>
+                <button className="btn-action btn-icon" onClick={()=>{
+                  // allow user to skip the video
+                  if (videoRef.current) { videoRef.current.pause(); }
+                  setScene('result');
+                  setConfettiOn(true);
+                  setTimeout(()=>setConfettiOn(false),7000);
+                }} title="跳过">
+                  <i className="fa fa-forward"></i>
+                </button>
+              </div>
+
+              <video ref={videoRef} className="w-full h-full object-cover" playsInline autoPlay muted={videoMuted} onEnded={onVideoEnd}>
+                <source src="12月31日.mp4" type="video/mp4" />
+                您的浏览器不支持 video 标签。
+              </video>
+            </div>
+          )}
+
+          {scene === 'result' && wish && (
+            <div className="flex flex-col items-center gap-8 w-full">
+              <div className="mb-[-2.5rem] opacity-20 tracking-[3em] text-[10px] uppercase select-none">Start of the Era</div>
+              <div className="result-2026 select-none">2026</div>
+
+              <div ref={cardRef} className="glass w-full max-w-2xl p-8 flex flex-col items-center gap-6" role="article" aria-label="祝福卡">
+                <div className="text-7xl">{wish.icon}</div>
+                <div className="text-2xl sm:text-4xl font-extrabold text-white leading-snug text-center">“ {wish.cn} ”</div>
+                <div className="text-sm sm:text-lg muted italic text-center">{wish.en}</div>
+
+                <div className="w-full border-t border-white/5 pt-6 flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-orange-400 text-xs font-bold tracking-widest uppercase">Dedicated To</div>
+                    <div className="font-black text-xl">{name || 'Friend'}</div>
+                  </div>
+
+                  <div className="flex gap-3 items-center">
+                    <button className="btn-action" onClick={exportCard} title="下载祝福卡为图片">下载</button>
+                    <button className="btn-action" onClick={shareCard} title="分享祝福卡">分享</button>
+                    <button className="btn-action btn-icon" onClick={()=>setScene('opening')} title="重置">
+                      <i className="fa fa-rotate-left"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+        </div>
+
+        <Confetti playing={confettiOn} />
+      </div>
+    );
+  }
+
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<App />);
+  </script>
 </body>
 </html>
