@@ -6,22 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2026 新年快乐 - 跨年盛典</title>
     
-    <!-- 基础样式与字体 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Sans+SC:wght@300;500;700&display=swap" rel="stylesheet">
+    <!-- 引入书法字体 Zhi Mang Xing 和艺术字体 Ma Shan Zheng -->
+    <link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@300;500;700&display=swap" rel="stylesheet">
     
-    <!-- 浏览器运行 React 和 TSX 的核心库 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
-        :root {
-            --gold: #FFD700;
-            --red: #FF3131;
-        }
-
         body {
             margin: 0;
             padding: 0;
@@ -31,32 +25,65 @@
             overflow: hidden;
         }
 
-        .font-cinzel { font-family: 'Cinzel', serif; }
+        /* 艺术笔触字体效果 */
+        .brush-text-2026 {
+            font-family: 'Zhi Mang Xing', cursive;
+            display: inline-block;
+            background: linear-gradient(
+                135deg, 
+                #ffcc33 0%, 
+                #ff6600 25%, 
+                #ff0033 50%, 
+                #3399ff 85%,
+                #ffcc33 100%
+            );
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            /* 模拟笔触的纹理感和厚重感 */
+            filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.8)) 
+                    drop-shadow(4px 4px 15px rgba(255, 69, 0, 0.4));
+            animation: shine 8s linear infinite;
+            line-height: 1.2;
+            padding-bottom: 20px;
+        }
+
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
 
         .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 215, 0, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.9);
         }
 
         .text-glow-gold {
-            text-shadow: 0 0 15px rgba(255, 215, 0, 0.7), 0 0 30px rgba(255, 215, 0, 0.4);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
         }
 
-        .text-glow-red {
-            text-shadow: 0 0 20px rgba(255, 49, 49, 0.8);
-        }
-
-        /* 隐藏滚动条 */
         ::-webkit-scrollbar { display: none; }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+        /* 模拟图片中的“笔触”杂色细节 */
+        .brush-text-2026::after {
+            content: "2026";
+            position: absolute;
+            left: 0;
+            top: 0;
+            z-index: -1;
+            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            mix-blend-mode: overlay;
         }
 
-        .animate-float { animation: float 4s ease-in-out infinite; }
+        @keyframes pulse-custom {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.02); opacity: 1; }
+        }
+        .animate-art { animation: pulse-custom 5s ease-in-out infinite; }
     </style>
 <script type="importmap">
 {
@@ -74,10 +101,9 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef, useCallback } = React;
+        const { useState, useEffect, useRef } = React;
 
-        // --- 粒子烟火系统 ---
-        const COLORS = ['#FFD700', '#FF4500', '#FF1493', '#00BFFF', '#7FFF00', '#FFFFFF', '#FF3131'];
+        const COLORS = ['#FFD700', '#FF4500', '#FF3131', '#00BFFF', '#7FFF00', '#FFFFFF'];
 
         const FireworkCanvas = () => {
             const canvasRef = useRef(null);
@@ -85,18 +111,17 @@
 
             const createParticles = (x, y) => {
                 const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-                const count = 100;
-                for (let i = 0; i < count; i++) {
+                for (let i = 0; i < 120; i++) {
                     const angle = Math.random() * Math.PI * 2;
-                    const speed = Math.random() * 6 + 1;
+                    const speed = Math.random() * 8 + 1;
                     particles.current.push({
                         x, y,
                         vx: Math.cos(angle) * speed,
                         vy: Math.sin(angle) * speed,
                         color,
                         alpha: 1,
-                        decay: Math.random() * 0.015 + 0.01,
-                        size: Math.random() * 2 + 0.5
+                        decay: Math.random() * 0.01 + 0.01,
+                        size: Math.random() * 3 + 0.5
                     });
                 }
             };
@@ -112,15 +137,12 @@
                 };
 
                 const render = () => {
-                    ctx.fillStyle = 'rgba(5, 5, 5, 0.15)';
+                    ctx.fillStyle = 'rgba(5, 5, 5, 0.2)';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                    particles.current.forEach((p, i) => {
-                        p.x += p.vx;
-                        p.y += p.vy;
-                        p.vy += 0.05; // 重力
-                        p.alpha -= p.decay;
-
+                    particles.current.forEach(p => {
+                        p.x += p.vx; p.y += p.vy;
+                        p.vy += 0.05; p.alpha -= p.decay;
                         ctx.globalAlpha = p.alpha;
                         ctx.fillStyle = p.color;
                         ctx.beginPath();
@@ -129,42 +151,25 @@
                     });
 
                     particles.current = particles.current.filter(p => p.alpha > 0);
-                    
-                    if (Math.random() < 0.02) {
-                        createParticles(Math.random() * canvas.width, Math.random() * canvas.height * 0.6);
-                    }
-
+                    if (Math.random() < 0.03) createParticles(Math.random() * canvas.width, Math.random() * canvas.height * 0.5);
                     frame = requestAnimationFrame(render);
                 };
 
                 window.addEventListener('resize', resize);
-                resize();
-                render();
-
-                const handleMouse = (e) => createParticles(e.clientX, e.clientY);
-                window.addEventListener('mousedown', handleMouse);
-
-                return () => {
-                    window.removeEventListener('resize', resize);
-                    window.removeEventListener('mousedown', handleMouse);
-                    cancelAnimationFrame(frame);
-                };
+                resize(); render();
+                window.addEventListener('mousedown', (e) => createParticles(e.clientX, e.clientY));
+                return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(frame); };
             }, []);
 
             return <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" />;
         };
 
-        // --- 倒计时组件 ---
         const Countdown = () => {
             const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
-
             useEffect(() => {
                 const timer = setInterval(() => {
                     const diff = new Date('2026-01-01T00:00:00').getTime() - Date.now();
-                    if (diff <= 0) {
-                        clearInterval(timer);
-                        return;
-                    }
+                    if (diff <= 0) return;
                     setTimeLeft({
                         d: Math.floor(diff / 86400000),
                         h: Math.floor((diff % 86400000) / 3600000),
@@ -175,112 +180,78 @@
                 return () => clearInterval(timer);
             }, []);
 
-            const Unit = ({ val, label }) => (
-                <div className="flex flex-col items-center mx-2 sm:mx-4">
-                    <div className="glass w-16 h-20 sm:w-20 sm:h-24 flex items-center justify-center rounded-2xl border border-yellow-500/20">
-                        <span className="text-2xl sm:text-4xl font-bold text-yellow-500 text-glow-gold">
-                            {val.toString().padStart(2, '0')}
-                        </span>
-                    </div>
-                    <span className="text-[10px] uppercase mt-2 text-yellow-500/60 tracking-widest">{label}</span>
-                </div>
-            );
-
             return (
-                <div className="flex justify-center mt-8">
-                    <Unit val={timeLeft.d} label="Days" />
-                    <Unit val={timeLeft.h} label="Hours" />
-                    <Unit val={timeLeft.m} label="Min" />
-                    <Unit val={timeLeft.s} label="Sec" />
+                <div className="flex justify-center mt-6 space-x-4">
+                    {Object.entries(timeLeft).map(([k, v]) => (
+                        <div key={k} className="flex flex-col items-center">
+                            <div className="glass w-14 h-16 sm:w-16 sm:h-20 flex items-center justify-center rounded-xl border border-white/10">
+                                <span className="text-xl sm:text-2xl font-bold text-yellow-500">{v.toString().padStart(2, '0')}</span>
+                            </div>
+                            <span className="text-[10px] uppercase mt-2 text-white/30 tracking-widest">{k}</span>
+                        </div>
+                    ))}
                 </div>
             );
         };
 
-        // --- 主应用 ---
         const App = () => {
             const [name, setName] = useState('');
             const [showWish, setShowWish] = useState(false);
-            const [loading, setLoading] = useState(false);
-
-            const handleStart = (e) => {
-                e.preventDefault();
-                setLoading(true);
-                setTimeout(() => {
-                    setLoading(false);
-                    setShowWish(true);
-                }, 1500);
-            };
 
             return (
                 <div className="relative min-h-screen flex flex-col items-center justify-center p-6 text-center">
                     <FireworkCanvas />
 
-                    <div className="relative z-10 w-full max-w-2xl">
-                        <div className="mb-4">
-                            <h2 className="text-yellow-600 font-cinzel tracking-[0.6em] text-sm sm:text-base uppercase">Countdown To</h2>
-                            <h1 className="text-8xl sm:text-[12rem] font-cinzel font-bold text-white text-glow-gold leading-none">2026</h1>
+                    <div className="relative z-10 w-full max-w-4xl">
+                        <div className="mb-2">
+                            <h2 className="text-yellow-600 font-bold tracking-[1em] text-xs sm:text-sm uppercase opacity-70">Happy New Year</h2>
+                            {/* 艺术笔触 2026 */}
+                            <div className="relative inline-block animate-art">
+                                <h1 className="text-[12rem] sm:text-[18rem] md:text-[22rem] brush-text-2026 select-none">
+                                    2026
+                                </h1>
+                            </div>
                         </div>
 
-                        <Countdown />
-
-                        <div className="mt-16 min-h-[300px] flex items-center justify-center w-full">
-                            {!showWish ? (
-                                <form onSubmit={handleStart} className="glass p-8 sm:p-12 rounded-[2.5rem] w-full animate-float">
-                                    <h3 className="text-xl sm:text-2xl font-bold mb-6">开启您的 2026 专属寄语</h3>
-                                    <input 
-                                        type="text" 
-                                        placeholder="输入您的名字..." 
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        className="w-full bg-white/5 border border-yellow-500/20 rounded-2xl px-6 py-4 text-center text-lg focus:outline-none focus:ring-2 focus:ring-yellow-500/40 mb-6"
-                                    />
-                                    <button className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-black py-4 rounded-2xl hover:scale-105 transition-transform uppercase tracking-widest">
-                                        点亮新年
-                                    </button>
-                                </form>
-                            ) : (
-                                <div className="glass p-8 sm:p-12 rounded-[2.5rem] w-full space-y-8 animate-in fade-in zoom-in duration-700">
-                                    {loading ? (
-                                        <div className="animate-spin h-10 w-10 border-4 border-yellow-500 border-t-transparent rounded-full mx-auto" />
-                                    ) : (
-                                        <>
-                                            <div className="space-y-6">
-                                                <p className="text-2xl sm:text-3xl font-medium leading-relaxed">
-                                                    亲爱的 {name || '朋友'}：<br/>
-                                                    愿 2026 的每一缕星光都为你闪烁，<br/>
-                                                    愿你的梦想在万家灯火中熠熠生辉。<br/>
-                                                    岁序更新，华章再启！
-                                                </p>
-                                                <div className="flex justify-center items-center space-x-3 opacity-30">
-                                                    <div className="h-px w-8 bg-yellow-500" />
-                                                    <i className="fas fa-crown text-yellow-500 text-xs"></i>
-                                                    <div className="h-px w-8 bg-yellow-500" />
-                                                </div>
-                                                <p className="text-sm text-gray-400 italic">
-                                                    "May every star of 2026 shine for you, and your dreams glow amidst the lights of the world."
-                                                </p>
-                                            </div>
-                                            <button 
-                                                onClick={() => setShowWish(false)}
-                                                className="text-[10px] text-gray-500 hover:text-yellow-500 tracking-[0.3em] uppercase"
-                                            >
-                                                <i className="fas fa-undo mr-2"></i>重写寄语
-                                            </button>
-                                        </>
-                                    )}
+                        {!showWish ? (
+                            <div className="flex flex-col items-center">
+                                <Countdown />
+                                <div className="mt-12 w-full max-w-md">
+                                    <form onSubmit={(e) => { e.preventDefault(); setShowWish(true); }} className="glass p-8 rounded-[2rem] space-y-6">
+                                        <input 
+                                            type="text" 
+                                            placeholder="输入您的名字以获得专属寄语" 
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center focus:outline-none focus:ring-1 focus:ring-yellow-500/50"
+                                        />
+                                        <button className="w-full bg-white text-black font-black py-4 rounded-xl hover:bg-yellow-500 transition-all uppercase tracking-widest text-sm">
+                                            点亮我的 2026
+                                        </button>
+                                    </form>
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        ) : (
+                            <div className="glass p-10 rounded-[2.5rem] w-full max-w-lg mx-auto space-y-6 animate-in fade-in zoom-in duration-500">
+                                <p className="text-2xl sm:text-3xl font-medium leading-relaxed italic">
+                                    " 亲爱的 {name || '朋友'}，<br/>
+                                    2026 是画卷，你是执笔者。<br/>
+                                    愿你每一笔，都绘出斑斓万象。"
+                                </p>
+                                <button onClick={() => setShowWish(false)} className="text-[10px] text-gray-500 hover:text-white tracking-[0.3em] uppercase underline">
+                                    重新开启
+                                </button>
+                            </div>
+                        )}
                         
-                        <div className="mt-12 text-gray-600 text-[10px] tracking-[0.5em] uppercase opacity-50">
-                            Click Anywhere To Spark Joy
+                        <div className="fixed bottom-8 left-0 w-full text-white/20 text-[10px] tracking-[1em] uppercase">
+                            Visual art inspired by oil brush texture
                         </div>
                     </div>
 
-                    {/* 氛围灯 */}
-                    <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden -z-10">
-                        <div className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-yellow-900/10 blur-[120px] rounded-full" />
-                        <div className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-red-900/10 blur-[120px] rounded-full" />
+                    {/* 氛围灯效 */}
+                    <div className="fixed inset-0 pointer-events-none -z-10">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-orange-900/5 blur-[150px] rounded-full" />
                     </div>
                 </div>
             );
