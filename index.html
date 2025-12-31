@@ -60,20 +60,14 @@
       z-index: 0;
     }
 
-    /* Custom Animations since we don't have tailwind-animate plugin */
+    /* Custom Animations */
     .animate-fade-in-up {
       animation: fadeInUp 1s ease-out forwards;
     }
     
     @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px) scale(0.95);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .animate-float {
@@ -122,8 +116,7 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    // --- Constants ---
-    // Using raw.githubusercontent.com for correct audio streaming
+    // --- 1. Constants ---
     const BG_MUSIC_URL = "https://raw.githubusercontent.com/caoxing7115/heart-animation/main/%E6%B5%86%E6%9E%9C.mp3";
 
     const BLESSINGS = [
@@ -149,38 +142,48 @@
       { cn: "祝你：眼里有火，心中有光。", en: "Fire in your vision, light in your soul.", icon: "🔥" }
     ];
 
-    // --- Components ---
-
-    // 1. Music Player
+    // --- 2. Music Player Component (Fixed for AutoPlay) ---
     const MusicPlayer = ({ autoStart = false }) => {
       const audioRef = useRef(null);
       const [isPlaying, setIsPlaying] = useState(false);
-      const [hasInteracted, setHasInteracted] = useState(false);
 
       const togglePlay = () => {
         if (!audioRef.current) return;
         if (isPlaying) {
           audioRef.current.pause();
         } else {
-          const playPromise = audioRef.current.play();
-          if (playPromise !== undefined) {
-            playPromise.catch(error => console.warn("Playback prevented:", error));
-          }
+          audioRef.current.play().catch(error => console.warn("Playback prevented:", error));
         }
         setIsPlaying(!isPlaying);
-        setHasInteracted(true);
       };
 
       useEffect(() => {
-        if (autoStart && !hasInteracted && audioRef.current) {
-          const playPromise = audioRef.current.play();
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => setIsPlaying(true))
-              .catch(() => setIsPlaying(false));
-          }
+        // Attempt immediate autoplay
+        if (autoStart && audioRef.current) {
+          audioRef.current.play()
+            .then(() => setIsPlaying(true))
+            .catch(() => setIsPlaying(false));
         }
-      }, [autoStart, hasInteracted]);
+
+        // Add one-time global click listener to force play on first interaction
+        const enableAudio = () => {
+          if (audioRef.current && audioRef.current.paused) {
+            audioRef.current.play()
+              .then(() => setIsPlaying(true))
+              .catch(e => console.log("Interaction play failed", e));
+          }
+          document.removeEventListener('click', enableAudio);
+          document.removeEventListener('keydown', enableAudio);
+        };
+
+        document.addEventListener('click', enableAudio);
+        document.addEventListener('keydown', enableAudio);
+
+        return () => {
+          document.removeEventListener('click', enableAudio);
+          document.removeEventListener('keydown', enableAudio);
+        };
+      }, [autoStart]);
 
       useEffect(() => {
         if (audioRef.current) {
@@ -193,7 +196,7 @@
         <div className="fixed top-6 right-6 z-[100]">
            <audio ref={audioRef} src={BG_MUSIC_URL} preload="auto" />
            <button 
-            onClick={togglePlay}
+            onClick={(e) => { e.stopPropagation(); togglePlay(); }}
             className={`
               relative group flex items-center justify-center w-12 h-12 rounded-full 
               backdrop-blur-md border border-white/20 shadow-[0_0_20px_rgba(0,0,0,0.5)]
@@ -214,7 +217,7 @@
       );
     };
 
-    // 2. Flip Digit (Countdown)
+    // --- 3. Flip Digit Component ---
     const FlipDigit = ({ value, label }) => {
       const [prev, setPrev] = useState(value);
       const [anim, setAnim] = useState(false);
@@ -232,25 +235,14 @@
 
       return (
         <div className="flex flex-col items-center gap-2">
-          <div 
-            className={`
-              relative w-[16vw] max-w-[120px] h-[22vw] max-h-[160px] 
-              bg-[#111] rounded-xl border border-white/10 shadow-2xl 
-              perspective-[1000px] overflow-hidden select-none
-              ${anim ? "flip-anim" : ""}
-            `}
-          >
+          <div className={`relative w-[16vw] max-w-[120px] h-[22vw] max-h-[160px] bg-[#111] rounded-xl border border-white/10 shadow-2xl perspective-[1000px] overflow-hidden select-none ${anim ? "flip-anim" : ""}`}>
              <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none z-10"></div>
              <div className="absolute inset-0 flex flex-col font-mono text-white">
                 <div className="digit-top relative h-1/2 overflow-hidden bg-[#1a1a1a] border-b border-white/5 flex items-end justify-center">
-                   <span className="text-[12vw] sm:text-[80px] font-bold leading-none translate-y-[50%]">
-                     {anim ? prev : value}
-                   </span>
+                   <span className="text-[12vw] sm:text-[80px] font-bold leading-none translate-y-[50%]">{anim ? prev : value}</span>
                 </div>
                 <div className="digit-bottom relative h-1/2 overflow-hidden bg-[#151515] flex items-start justify-center">
-                   <span className="text-[12vw] sm:text-[80px] font-bold leading-none translate-y-[-50%]">
-                     {anim ? value : prev}
-                   </span>
+                   <span className="text-[12vw] sm:text-[80px] font-bold leading-none translate-y-[-50%]">{anim ? value : prev}</span>
                 </div>
              </div>
           </div>
@@ -259,7 +251,7 @@
       );
     };
 
-    // 3. Canvas Effects
+    // --- 4. Canvas Effects (Enhanced Fireworks) ---
     const FireworkCanvas = ({ active }) => {
       const cRef = useRef(null);
 
@@ -272,53 +264,55 @@
         let particles = [];
         let animationFrameId;
 
-        const resize = () => { 
-          canvas.width = window.innerWidth; 
-          canvas.height = window.innerHeight; 
-        };
+        const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
         resize();
         window.addEventListener('resize', resize);
 
-        const colors = ['#ff4d00', '#ffd700', '#00ccff', '#ff77aa', '#77ff66'];
+        const colors = ['#ff4d00', '#ffd700', '#00ccff', '#ff0055', '#33ff00', '#ffffff'];
 
         const loop = () => {
-          ctx.fillStyle = 'rgba(0,0,0,0.15)'; 
+          ctx.fillStyle = 'rgba(0,0,0,0.2)'; // Slower fade for trails
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
           particles = particles.filter(p => p.alpha > 0.02);
+          
+          ctx.globalCompositeOperation = 'lighter'; // Bright glow effect
+          
           particles.forEach(p => {
-            p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.alpha -= 0.012;
+            p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.alpha -= 0.015;
             ctx.globalAlpha = Math.max(0, p.alpha); 
             ctx.fillStyle = p.color;
             ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
-            ctx.globalAlpha = 1;
           });
+          
+          ctx.globalCompositeOperation = 'source-over'; // Reset
 
-          if (Math.random() < 0.05) {
+          // Higher spawn rate
+          if (Math.random() < 0.08) {
             const x = Math.random() * canvas.width;
-            const y = Math.random() * canvas.height * 0.5;
-            for (let i = 0; i < 50; i++) {
+            const y = Math.random() * canvas.height * 0.6;
+            // More particles
+            for (let i = 0; i < 80; i++) {
               const a = Math.random() * Math.PI * 2;
-              const s = Math.random() * 4 + 1;
+              const s = Math.random() * 5 + 2; 
               particles.push({ 
-                x, y, 
-                vx: Math.cos(a) * s, vy: Math.sin(a) * s, 
-                alpha: 1, 
+                x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, alpha: 1, 
                 color: colors[Math.floor(Math.random() * colors.length)], 
-                size: 1 + Math.random() * 2 
+                size: 1.5 + Math.random() * 2 
               });
             }
           }
           animationFrameId = requestAnimationFrame(loop);
         };
         loop();
+
         return () => {
           window.removeEventListener('resize', resize);
           cancelAnimationFrame(animationFrameId);
         };
       }, [active]);
 
-      return <canvas ref={cRef} className="fixed inset-0 -z-10 pointer-events-none opacity-60" />;
+      return <canvas ref={cRef} className="fixed inset-0 pointer-events-none opacity-80" style={{ zIndex: 0 }} />;
     };
 
     const ConfettiCanvas = ({ active }) => {
@@ -336,14 +330,14 @@
         const colors = ['#ff4d00', '#ffd700', '#00ccff', '#ffffff', '#ff77aa', '#77ff66'];
 
         const spawn = () => {
-          for (let i = 0; i < 100; i++) {
+          for (let i = 0; i < 150; i++) {
             pieces.push({
               x: Math.random() * canvas.width,
               y: -20 - Math.random() * 200,
-              vx: (Math.random() - 0.5) * 4,
-              vy: 2 + Math.random() * 4,
+              vx: (Math.random() - 0.5) * 6,
+              vy: 3 + Math.random() * 5,
               rot: Math.random() * 360,
-              vr: (Math.random() - 0.5) * 10,
+              vr: (Math.random() - 0.5) * 15,
               w: 8 + Math.random() * 10,
               h: 10 + Math.random() * 12,
               color: colors[Math.floor(Math.random() * colors.length)],
@@ -359,7 +353,7 @@
             ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI / 180);
             ctx.fillStyle = p.color; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
             ctx.restore();
-            if (p.y > canvas.height + 50 || p.life > 500) pieces.splice(i, 1);
+            if (p.y > canvas.height + 50 || p.life > 600) pieces.splice(i, 1);
           });
           raf = requestAnimationFrame(loop);
         };
@@ -368,10 +362,10 @@
         else { ctx.clearRect(0, 0, canvas.width, canvas.height); }
         return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); pieces = []; };
       }, [active]);
-      return <canvas ref={cRef} className={`fixed inset-0 pointer-events-none z-50 ${active ? 'block' : 'hidden'}`} />;
+      return <canvas ref={cRef} className={`fixed inset-0 pointer-events-none z-[100] ${active ? 'block' : 'hidden'}`} />;
     };
 
-    // --- Main App ---
+    // --- 5. Main App Component ---
     function App() {
       const [scene, setScene] = useState('opening');
       const [name, setName] = useState('');
@@ -436,30 +430,51 @@
         setVideoMuted(true);
       };
 
+      // Fixed Export Card
       const exportCard = async () => {
         if (!cardRef.current) return;
         try {
-          const canvas = await html2canvas(cardRef.current, { scale: 2, backgroundColor: null });
+          // Add config for better rendering and CORS
+          const canvas = await window.html2canvas(cardRef.current, { 
+            scale: 2, 
+            useCORS: true, 
+            backgroundColor: '#050a14', 
+            allowTaint: true 
+          });
           const link = document.createElement('a');
           link.href = canvas.toDataURL('image/png');
           link.download = `祝福卡-${name || 'Friend'}-2026.png`;
+          document.body.appendChild(link);
           link.click();
-        } catch (err) { console.error("Export failed", err); }
+          document.body.removeChild(link);
+        } catch (err) { 
+          console.error("Export failed", err); 
+          alert("保存失败，请检查浏览器权限或尝试截图。");
+        }
       };
 
+      // Fixed Share Card
       const shareCard = async () => {
         if (navigator.share && cardRef.current) {
           try {
-            const canvas = await html2canvas(cardRef.current, { scale: 2, backgroundColor: null });
-            const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-            if (blob) {
-              const file = new File([blob], `祝福卡-${name || 'Friend'}-2026.png`, { type: blob.type });
-              await navigator.share({
-                files: [file],
-                title: '新年祝福',
-                text: `给 ${name || '你'} 的专属新年签`,
-              });
-            }
+            const canvas = await window.html2canvas(cardRef.current, { 
+              scale: 2, 
+              useCORS: true, 
+              backgroundColor: '#050a14', 
+              allowTaint: true 
+            });
+            canvas.toBlob(async (blob) => {
+              if (blob) {
+                const file = new File([blob], `祝福卡-${name || 'Friend'}-2026.png`, { type: blob.type });
+                try {
+                  await navigator.share({
+                    files: [file],
+                    title: '新年祝福',
+                    text: `给 ${name || '你'} 的专属新年签`,
+                  });
+                } catch (e) { console.warn("Share cancelled"); }
+              }
+            }, 'image/png');
           } catch (err) { exportCard(); }
         } else {
           exportCard();
