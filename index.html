@@ -4,13 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 跨年艺术盛典 | Cinematic Experience</title>
+    <title>2026 跨年艺术盛典 | Cinematic New Year Experience</title>
     
-    <!-- 引入资源 -->
+    <!-- 核心资源 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&family=Noto+Sans+SC:wght@100;300;500;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     
+    <!-- React & Babel for Browser Rendering -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -32,85 +33,74 @@
             user-select: none;
         }
 
-        /* --- 电影噪点滤镜 --- */
+        /* 电影噪点滤镜 */
         .film-grain {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             pointer-events: none;
             z-index: 999;
-            opacity: 0.04;
+            opacity: 0.05;
             background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
-        /* --- 翻页时钟 3D 视觉升级 --- */
+        /* 3D 翻页时钟 */
         .flip-card {
-            background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 50%, #000 50%, #111 100%);
-            border-radius: 1rem;
-            width: clamp(70px, 18vw, 140px);
-            height: clamp(90px, 24vw, 180px);
+            background: linear-gradient(180deg, #1f1f1f 0%, #0d0d0d 50%, #000 50%, #111 100%);
+            border-radius: 0.75rem;
+            width: clamp(60px, 15vw, 120px);
+            height: clamp(80px, 20vw, 160px);
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
             font-family: 'JetBrains Mono', sans-serif;
-            font-size: clamp(3.5rem, 11vw, 7.5rem);
+            font-size: clamp(3rem, 10vw, 6.5rem);
             font-weight: 700;
             color: var(--text-main);
-            margin: 0 0.5rem;
-            box-shadow: 
-                0 20px 50px rgba(0,0,0,0.9),
-                inset 0 0 10px rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.03);
+            margin: 0 0.3rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+            border: 1px solid rgba(255,255,255,0.05);
             overflow: hidden;
-        }
-
-        .flip-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 50%;
-            background: rgba(255,255,255,0.02);
-            pointer-events: none;
         }
 
         .flip-card::after {
             content: '';
             position: absolute;
-            left: 0; top: 50%; width: 100%; height: 3px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            left: 0; top: 50%; width: 100%; height: 2px;
+            background: rgba(0,0,0,0.6);
             z-index: 5;
         }
 
-        /* --- 开篇 2026 辉光细节 --- */
+        /* 书法标题动效 */
         .opening-2026 {
             font-family: 'Zhi Mang Xing', cursive;
-            font-size: clamp(7rem, 22vw, 14rem);
-            background: linear-gradient(135deg, #ff8c00 0%, #ffcc00 40%, #00ccff 70%, #0066ff 100%);
+            font-size: clamp(6rem, 20vw, 13rem);
+            background: linear-gradient(135deg, #ff8c00 0%, #ffcc00 50%, #00ccff 100%);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            filter: drop-shadow(0 0 35px rgba(255,140,0,0.5));
+            filter: drop-shadow(0 0 30px rgba(255,140,0,0.4));
             animation: breathe-glow 4s ease-in-out infinite alternate;
-            letter-spacing: -2px;
         }
 
         @keyframes breathe-glow {
             from { filter: drop-shadow(0 0 20px rgba(255,140,0,0.3)); transform: scale(1); }
-            to { filter: drop-shadow(0 0 50px rgba(255,140,0,0.7)); transform: scale(1.03); }
+            to { filter: drop-shadow(0 0 50px rgba(255,140,0,0.6)); transform: scale(1.02); }
         }
 
-        /* --- 结果页 2026 油彩笔触 (图2艺术升级) --- */
+        /* 油彩笔触 2026 */
         .result-2026 {
             font-family: 'Zhi Mang Xing', cursive;
-            font-size: clamp(9rem, 28vw, 24rem);
-            line-height: 0.75;
-            background: linear-gradient(165deg, #f00 0%, #ff8c00 25%, #ffd700 45%, #ff4500 65%, #1e90ff 85%, #00f 100%);
+            font-size: clamp(8rem, 25vw, 20rem);
+            line-height: 0.8;
+            background: linear-gradient(165deg, #f00 0%, #ff8c00 30%, #ffd700 50%, #1e90ff 80%, #00f 100%);
             background-size: 200% auto;
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            filter: url(#ultra-oil-brush) drop-shadow(0 15px 45px rgba(0,0,0,0.6));
-            animation: flow-colors 12s linear infinite;
+            filter: url(#ultra-oil-brush) drop-shadow(0 20px 50px rgba(0,0,0,0.7));
+            animation: flow-colors 8s linear infinite;
         }
 
         @keyframes flow-colors {
@@ -118,98 +108,95 @@
             100% { background-position: 200% 50%; }
         }
 
-        /* --- 场景容器 --- */
-        .scene-transition {
-            transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
         .glass-card {
-            background: rgba(8, 8, 8, 0.65);
-            backdrop-filter: blur(35px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 3rem;
-            padding: 3rem;
-            width: 95%;
-            max-width: 550px;
-            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7);
+            background: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(40px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 2.5rem;
+            padding: 2.5rem;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
         }
 
         .input-elegant {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 1.25rem;
-            padding: 1.25rem;
-            font-size: 1.75rem;
-            font-weight: 700;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1rem;
+            font-size: 1.5rem;
+            font-weight: 500;
             text-align: center;
             width: 100%;
-            transition: all 0.4s;
+            transition: all 0.3s;
             color: #fff;
         }
 
         .input-elegant:focus {
             outline: none;
-            background: rgba(255, 255, 255, 0.07);
-            border-color: var(--accent);
-            box-shadow: 0 0 25px rgba(255, 77, 0, 0.2);
+            border-color: #ff8c00;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
         }
 
         .btn-action {
-            background: linear-gradient(90deg, #ff4500, #ff8c00);
-            padding: 1.25rem;
-            border-radius: 1.25rem;
-            font-size: 1.25rem;
-            font-weight: 900;
-            letter-spacing: 0.5em;
-            text-transform: uppercase;
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-action::after {
-            content: '';
-            position: absolute;
-            top: -50%; left: -50%; width: 200%; height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
-            transform: rotate(45deg);
+            background: linear-gradient(90deg, #ff4500, #ff8c00, #ff4500);
+            background-size: 200% auto;
+            padding: 1rem;
+            border-radius: 1rem;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.4em;
             transition: 0.5s;
         }
-
-        .btn-action:hover::after {
-            left: 100%;
+        
+        .btn-action:hover {
+            background-position: right center;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 69, 0, 0.3);
         }
 
-        .btn-action:active { transform: scale(0.96); }
+        .btn-action:active { transform: scale(0.98); }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 3px solid #FFF;
+            border-bottom-color: #FF3D00;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
         ::-webkit-scrollbar { display: none; }
     </style>
-<script type="importmap">
+
+    <script type="importmap">
 {
   "imports": {
-    "vite": "https://esm.sh/vite@^7.3.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
 </script>
 </head>
 <body>
-    <!-- 电影噪点 -->
     <div class="film-grain"></div>
 
-    <!-- 增强版油彩滤镜 -->
+    <!-- 高级油彩滤镜 -->
     <svg style="position: absolute; width: 0; height: 0;">
         <defs>
             <filter id="ultra-oil-brush" x="-20%" y="-20%" width="140%" height="140%">
-                <feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="5" result="noise" />
-                <feDisplacementMap in="SourceGraphic" in2="noise" scale="25" result="rough" />
-                <!-- 模拟光影反差 -->
-                <feComponentTransfer in="rough" result="contrast">
-                    <feFuncR type="linear" slope="1.3" />
-                    <feFuncG type="linear" slope="1.3" />
-                    <feFuncB type="linear" slope="1.3" />
-                </feComponentTransfer>
-                <feGaussianBlur in="contrast" stdDeviation="0.4" />
+                <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="4" result="noise" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="20" />
             </filter>
         </defs>
     </svg>
@@ -217,32 +204,10 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        import { GoogleGenAI } from "@google/genai";
         const { useState, useEffect, useRef } = React;
 
-        const BLESSINGS = [
-            { cn: "万物更新，旧疾当愈，长安常安。", en: "Renewal for all, healing for old pains, lasting peace for you.", icon: "🌱" },
-            { cn: "往事清零，爱恨随意，迎接新光。", en: "Reset the past, let go of the mundane, embrace the new light.", icon: "✨" },
-            { cn: "祝你2026：眼里有星辰，心中有大海。", en: "2026: May stars light your eyes and the ocean fill your heart.", icon: "🌊" },
-            { cn: "岁岁常欢愉，年年皆胜意。", en: "Joy in every hour, victory in every year.", icon: "🍊" },
-            { cn: "凛冬散尽，星河长明，新年顺遂。", en: "Winter fades, the galaxy remains bright, all goes well.", icon: "🌌" },
-            { cn: "新的一年，奔赴山海，保持热爱。", en: "Heading for the mountains and seas, keep your fire burning.", icon: "🏔️" },
-            { cn: "愿新年，胜旧年，多喜乐，长安宁。", en: "May the new year excel the old, full of joy and tranquility.", icon: "🎊" },
-            { cn: "不期而遇，不言而喻，如期而至。", en: "Unexpected encounters, silent bonds, arriving on schedule.", icon: "⏳" },
-            { cn: "愿你此生尽兴，赤诚善良。", en: "May you live to the fullest, sincere and kind to the core.", icon: "❤️" },
-            { cn: "新的一年，要把开心放在第一位。", en: "In the coming year, prioritize your happiness above all.", icon: "🥳" },
-            { cn: "山高水长，愿你我顶峰相见。", en: "The peak awaits, may we meet there in triumph.", icon: "🚩" },
-            { cn: "所得皆所愿，所行皆坦途。", en: "All gains as desired, all paths smooth and free.", icon: "🛣️" },
-            { cn: "愿2026年的你，活得像光，灿烂夺目。", en: "In 2026, live like light—brilliant and dazzling.", icon: "☀️" },
-            { cn: "不负热爱，奔向未来。", en: "Live up to your passion, sprint toward the future.", icon: "⚡" },
-            { cn: "2026，开启无限可能。", en: "2026: Unlocking infinite possibilities within you.", icon: "🗝️" },
-            { cn: "烟火人间，岁岁年年。", en: "Amidst the earthly fireworks, year after year.", icon: "🎆" },
-            { cn: "跨过星河，迈向未来。", en: "Stride across the galaxy into a brand new future.", icon: "🛸" },
-            { cn: "生活明朗，万物可爱。", en: "Life is bright, and all things are endearing.", icon: "🐾" },
-            { cn: "愿新年：无忧无虑，所得皆愿。", en: "May your year be carefree, granting every wish.", icon: "🧸" },
-            { cn: "祝你：眼里有火，心中有光。", en: "Fire in your vision, light in your soul.", icon: "🔥" }
-        ];
-
-        // --- 动态粒子烟火系统 ---
+        // --- 烟火系统 ---
         const FireworkCanvas = ({ active }) => {
             const canvasRef = useRef(null);
             useEffect(() => {
@@ -253,49 +218,38 @@
                 const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
                 
                 const createFirework = (x, y) => {
-                    const colors = ['#ff4d00', '#ffcc00', '#00ccff', '#ffffff', '#ff0066', '#77ff00'];
-                    const color = colors[Math.floor(Math.random() * colors.length)];
-                    const count = 60 + Math.random() * 40;
-                    for (let i = 0; i < count; i++) {
+                    const h = Math.random() * 360;
+                    for (let i = 0; i < 50; i++) {
                         const angle = Math.random() * Math.PI * 2;
-                        const speed = Math.random() * 5 + 1.5;
+                        const speed = Math.random() * 4 + 1;
                         particles.push({
                             x, y,
                             vx: Math.cos(angle) * speed,
                             vy: Math.sin(angle) * speed,
                             a: 1,
-                            c: color,
-                            size: 1 + Math.random() * 1.5
+                            c: `hsl(${h}, 100%, 60%)`,
+                            s: Math.random() * 2 + 1
                         });
                     }
                 };
 
                 const loop = () => {
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
-                    particles = particles.filter(p => p.a > 0.05);
-                    particles.forEach(p => {
-                        p.x += p.vx;
-                        p.y += p.vy;
-                        p.vy += 0.07;
-                        p.a -= 0.012;
+                    particles.forEach((p, i) => {
+                        p.x += p.vx; p.y += p.vy;
+                        p.vy += 0.05; p.a -= 0.01;
+                        if (p.a <= 0) particles.splice(i, 1);
                         ctx.globalAlpha = p.a;
                         ctx.fillStyle = p.c;
-                        ctx.beginPath();
-                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                        ctx.fill();
+                        ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); ctx.fill();
                     });
-
-                    if (Math.random() < 0.06) {
-                        createFirework(Math.random() * canvas.width, Math.random() * canvas.height * 0.7);
-                    }
+                    if (Math.random() < 0.05) createFirework(Math.random() * canvas.width, Math.random() * canvas.height * 0.6);
                     requestAnimationFrame(loop);
                 };
 
                 window.addEventListener('resize', resize);
-                resize();
-                loop();
+                resize(); loop();
                 return () => window.removeEventListener('resize', resize);
             }, [active]);
 
@@ -305,17 +259,19 @@
         const App = () => {
             const [scene, setScene] = useState('opening');
             const [name, setName] = useState('');
-            const [wish, setWish] = useState(null);
+            const [blessing, setBlessing] = useState(null);
+            const [loading, setLoading] = useState(false);
             const [timeLeft, setTimeLeft] = useState({ d: '0', h: '00', m: '00', s: '00' });
 
             useEffect(() => {
+                const target = new Date('2026-01-01T00:00:00');
                 const timer = setInterval(() => {
-                    const diff = new Date('2026-01-01T00:00:00') - new Date();
+                    const diff = target - new Date();
                     if (diff <= 0) {
                         setTimeLeft({ d: '0', h: '00', m: '00', s: '00' });
                     } else {
                         setTimeLeft({
-                            d: String(Math.floor(diff / 86400000)),
+                            d: Math.floor(diff / 86400000),
                             h: String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0'),
                             m: String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0'),
                             s: String(Math.floor((diff % 60000) / 1000)).padStart(2, '0')
@@ -325,10 +281,32 @@
                 return () => clearInterval(timer);
             }, []);
 
-            const handleGo = () => {
+            const generateAIBlessing = async () => {
                 if (!name.trim()) return;
-                setWish(BLESSINGS[Math.floor(Math.random() * BLESSINGS.length)]);
-                setScene('video');
+                setLoading(true);
+                try {
+                    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+                    const response = await ai.models.generateContent({
+                        model: "gemini-3-flash-preview",
+                        contents: `请为${name}生成一段富有哲理、温暖且大气的2026年跨年祝福语（包含中文和一句对应的英文）。语气要像电影对白一样深刻。`
+                    });
+                    const text = response.text;
+                    const lines = text.split('\n').filter(l => l.trim().length > 5);
+                    setBlessing({
+                        cn: lines[0] || "愿新的一年，星辰指引方向，山海皆为坦途。",
+                        en: lines[1] || "May the stars guide your path, and the world be your canvas."
+                    });
+                    setScene('video');
+                } catch (e) {
+                    console.error("AI Error:", e);
+                    setBlessing({
+                        cn: "万物更新，旧疾当愈，长安常安。",
+                        en: "Renewal for all, healing for old pains, lasting peace for you."
+                    });
+                    setScene('video');
+                } finally {
+                    setLoading(false);
+                }
             };
 
             return (
@@ -341,31 +319,32 @@
                             <h1 className="opening-2026">2026</h1>
                             
                             <div className="flex flex-col items-center">
-                                <div className="flex space-x-3 sm:space-x-5 mb-8">
+                                <div className="flex space-x-2 sm:space-x-4 mb-8">
                                     <div className="flip-card">{timeLeft.h}</div>
                                     <div className="flip-card">{timeLeft.m}</div>
                                     <div className="flip-card">{timeLeft.s}</div>
                                 </div>
-                                <div className="text-orange-500 font-black tracking-[0.5em] text-sm sm:text-lg uppercase opacity-90">
-                                    {timeLeft.d} DAYS • {timeLeft.h} HOURS • {timeLeft.m} MINS • {timeLeft.s} SECS
+                                <div className="text-orange-400 font-bold tracking-[0.4em] text-xs sm:text-sm uppercase opacity-80">
+                                    {timeLeft.d} DAYS REMAINING
                                 </div>
                             </div>
 
-                            <div className="glass-card text-center space-y-8">
-                                <h2 className="text-white/60 text-sm tracking-[0.8em] uppercase font-light">Customized New Year Scroll</h2>
+                            <div className="glass-card text-center space-y-6">
+                                <h2 className="text-white/40 text-[10px] tracking-[0.6em] uppercase">Custom New Year Scroll</h2>
                                 <input 
                                     type="text"
-                                    maxLength={10}
                                     placeholder="输入您的姓名"
                                     className="input-elegant"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
+                                    disabled={loading}
                                 />
                                 <button 
-                                    onClick={handleGo}
-                                    className="w-full btn-action text-white"
+                                    onClick={generateAIBlessing}
+                                    className="w-full btn-action text-white flex items-center justify-center"
+                                    disabled={loading}
                                 >
-                                    开启新年寄语
+                                    {loading ? <span className="loader scale-50"></span> : "开启新年寄语"}
                                 </button>
                             </div>
                         </div>
@@ -387,39 +366,37 @@
 
                     {/* Scene 3: 结果展示 */}
                     {scene === 'result' && (
-                        <div className="flex flex-col items-center justify-center h-full text-center p-8 animate-in fade-in zoom-in duration-1000">
-                            <div className="mb-[-4rem] opacity-20 tracking-[2.5em] text-[10px] uppercase ml-12 select-none">Start of the Era</div>
+                        <div className="flex flex-col items-center justify-center h-full text-center p-8 animate-in fade-in duration-1000">
                             <h1 className="result-2026">2026</h1>
 
-                            <div className="glass-card mt-16 space-y-10 animate-in slide-in-from-bottom-24 duration-1000 delay-300">
-                                <div className="text-8xl drop-shadow-2xl">{wish.icon}</div>
+                            <div className="glass-card mt-8 space-y-10 animate-in slide-in-from-bottom-12 duration-1000 delay-300">
+                                <div className="text-6xl">✨</div>
                                 <div className="space-y-6">
-                                    <p className="text-3xl sm:text-5xl font-black text-white leading-[1.3] tracking-wider">
-                                        “ {wish.cn} ”
+                                    <p className="text-2xl sm:text-4xl font-black text-white leading-relaxed tracking-wider">
+                                        “ {blessing?.cn} ”
                                     </p>
-                                    <p className="text-sm sm:text-lg text-white/40 italic font-light tracking-[0.1em] leading-relaxed max-w-md mx-auto">
-                                        {wish.en}
+                                    <p className="text-sm sm:text-base text-white/40 italic font-light tracking-wide max-w-sm mx-auto">
+                                        {blessing?.en}
                                     </p>
                                 </div>
-                                <div className="pt-10 border-t border-white/5">
-                                    <p className="text-orange-500/80 font-bold text-xs tracking-[0.5em] uppercase italic">
+                                <div className="pt-8 border-t border-white/10">
+                                    <p className="text-orange-500 font-bold text-[10px] tracking-[0.5em] uppercase">
                                         DEDICATED TO {name}
                                     </p>
                                 </div>
                                 <button 
                                     onClick={() => setScene('opening')}
-                                    className="text-[10px] text-white/20 hover:text-white/80 tracking-[1em] transition-all uppercase cursor-pointer"
+                                    className="text-[10px] text-white/20 hover:text-white/80 tracking-[0.8em] transition-all uppercase"
                                 >
-                                    [ RESET ]
+                                    [ RESTART ]
                                 </button>
                             </div>
                         </div>
                     )}
 
-                    {/* 页面装饰底纹 */}
-                    <div className="fixed bottom-8 w-full text-center text-[9px] text-white/5 tracking-[3em] pointer-events-none uppercase font-light">
-                        Art Direction • Happy New Year 2026
-                    </div>
+                    <footer className="fixed bottom-8 w-full text-center text-[8px] text-white/10 tracking-[2em] pointer-events-none uppercase">
+                        Cinema Experience • 2026 New Year
+                    </footer>
                 </div>
             );
         };
