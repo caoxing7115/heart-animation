@@ -142,7 +142,7 @@
       { cn: "祝你：眼里有火，心中有光。", en: "Fire in your vision, light in your soul.", icon: "🔥" }
     ];
 
-    // --- 2. Music Player Component (Fixed for AutoPlay) ---
+    // --- 2. Music Player Component ---
     const MusicPlayer = ({ autoStart = false }) => {
       const audioRef = useRef(null);
       const [isPlaying, setIsPlaying] = useState(false);
@@ -158,14 +158,12 @@
       };
 
       useEffect(() => {
-        // Attempt immediate autoplay
         if (autoStart && audioRef.current) {
           audioRef.current.play()
             .then(() => setIsPlaying(true))
             .catch(() => setIsPlaying(false));
         }
 
-        // Add one-time global click listener to force play on first interaction
         const enableAudio = () => {
           if (audioRef.current && audioRef.current.paused) {
             audioRef.current.play()
@@ -251,7 +249,7 @@
       );
     };
 
-    // --- 4. Canvas Effects (Enhanced Fireworks) ---
+    // --- 4. Canvas Effects ---
     const FireworkCanvas = ({ active }) => {
       const cRef = useRef(null);
 
@@ -271,12 +269,12 @@
         const colors = ['#ff4d00', '#ffd700', '#00ccff', '#ff0055', '#33ff00', '#ffffff'];
 
         const loop = () => {
-          ctx.fillStyle = 'rgba(0,0,0,0.2)'; // Slower fade for trails
+          ctx.fillStyle = 'rgba(0,0,0,0.2)';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
           particles = particles.filter(p => p.alpha > 0.02);
           
-          ctx.globalCompositeOperation = 'lighter'; // Bright glow effect
+          ctx.globalCompositeOperation = 'lighter';
           
           particles.forEach(p => {
             p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.alpha -= 0.015;
@@ -285,13 +283,11 @@
             ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
           });
           
-          ctx.globalCompositeOperation = 'source-over'; // Reset
+          ctx.globalCompositeOperation = 'source-over';
 
-          // Higher spawn rate
           if (Math.random() < 0.08) {
             const x = Math.random() * canvas.width;
             const y = Math.random() * canvas.height * 0.6;
-            // More particles
             for (let i = 0; i < 80; i++) {
               const a = Math.random() * Math.PI * 2;
               const s = Math.random() * 5 + 2; 
@@ -430,11 +426,10 @@
         setVideoMuted(true);
       };
 
-      // Fixed Export Card (Simplified Logic based on user feedback)
+      // FIX: Use the specific download logic requested
       const exportCard = async () => {
         if (!cardRef.current) return;
-        // use html2canvas (already loaded)
-        // using window.html2canvas to ensure we access the global library
+        // Directly use html2canvas as requested by user
         const canvas = await window.html2canvas(cardRef.current, { scale: 2, backgroundColor: null });
         const a = document.createElement('a');
         a.href = canvas.toDataURL('image/png');
@@ -445,12 +440,8 @@
       const shareCard = async () => {
         if (navigator.share && cardRef.current) {
           try {
-            const canvas = await window.html2canvas(cardRef.current, { 
-              scale: 2, 
-              useCORS: true, 
-              backgroundColor: '#050a14', 
-              allowTaint: true 
-            });
+            // Updated to match the successful export config style
+            const canvas = await window.html2canvas(cardRef.current, { scale: 2, backgroundColor: null });
             canvas.toBlob(async (blob) => {
               if (blob) {
                 const file = new File([blob], `祝福卡-${name || 'Friend'}-2026.png`, { type: blob.type });
