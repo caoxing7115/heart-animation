@@ -4,162 +4,630 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>2026 跨年艺术盛典 | Cinematic Experience</title>
+  <meta name="description" content="A visually stunning, cinematic New Year's Eve countdown and greeting card generator with background music and 3D effects.">
 
-  <!-- Tailwind & Icons -->
+  <!-- External Libraries -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&family=Noto+Sans+SC:wght@300;500;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
-
-  <!-- React -->
+  
+  <!-- React & Babel -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <!-- ✅ ONLY ONE html2canvas (FIXED) -->
+  
+  <!-- Utilities -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
+    /* CRITICAL FIX: Ensure full height for app container */
     html, body, #root {
       height: 100%;
+      width: 100%;
       margin: 0;
-      overflow: hidden;
-      background: #000;
+      padding: 0;
+      overflow: hidden; /* Prevent scroll on effects */
+      background-color: #000;
+      color: #f7f7f7;
       font-family: 'Noto Sans SC', sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
+    
+    /* Film Grain Animation */
+    @keyframes grain {
+      0%, 100% { transform: translate(0, 0); }
+      10% { transform: translate(-5%, -10%); }
+      20% { transform: translate(-15%, 5%); }
+      30% { transform: translate(7%, -25%); }
+      40% { transform: translate(-5%, 25%); }
+      50% { transform: translate(-15%, 10%); }
+      60% { transform: translate(15%, 0%); }
+      70% { transform: translate(0%, 15%); }
+      80% { transform: translate(3%, 35%); }
+      90% { transform: translate(-10%, 10%); }
+    }
+    
+    .film-grain::after {
+      content: "";
+      position: absolute;
+      top: -100%;
+      left: -100%;
+      width: 300%;
+      height: 300%;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.6' numOctaves='3'/%3E%3C/feTurbulence%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+      animation: grain 8s steps(10) infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Custom Animations */
+    .animate-fade-in-up {
+      animation: fadeInUp 1s ease-out forwards;
+    }
+    
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .animate-float {
+      animation: float 6s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    /* Flip Animation Keyframes */
+    @keyframes flipTop { 
+      0%{ transform: rotateX(0deg); opacity:1;} 
+      100%{ transform: rotateX(-90deg); opacity:0.5; } 
+    }
+    @keyframes flipBottom { 
+      0%{ transform: rotateX(90deg); opacity:0.5;} 
+      100%{ transform: rotateX(0deg); opacity:1;} 
+    }
+    .flip-anim .digit-top { 
+      animation: flipTop 0.56s cubic-bezier(.2,.9,.2,1) forwards; 
+      transform-origin: bottom; 
+    }
+    .flip-anim .digit-bottom { 
+      animation: flipBottom 0.56s cubic-bezier(.2,.9,.2,1) forwards; 
+      transform-origin: top; 
+    }
+
+    /* Custom Scrollbar for hidden overflows */
+    ::-webkit-scrollbar { width: 0px; background: transparent; }
   </style>
-</head>
-
-<body>
-<div id="root"></div>
-
-<script type="text/babel">
-const { useState, useEffect, useRef } = React;
-
-/* ====== CONSTANTS ====== */
-const BG_MUSIC_URL =
-  "https://raw.githubusercontent.com/caoxing7115/heart-animation/main/%E6%B5%86%E6%9E%9C.mp3";
-
-/* ✅ FIX: ABSOLUTE URL (CRITICAL FOR MOBILE) */
-const VIDEO_SRC =
-  "https://raw.githubusercontent.com/caoxing7115/heart-animation/main/12%E6%9C%8831%E6%97%A5.mp4";
-
-/* ====== APP ====== */
-function App() {
-  const [scene, setScene] = useState("opening");
-  const [name, setName] = useState("");
-  const [videoMuted, setVideoMuted] = useState(true);
-
-  const videoRef = useRef(null);
-  const cardRef = useRef(null);
-
-  const startAction = () => {
-    if (!name.trim()) return;
-    setScene("video");
-
-    requestAnimationFrame(() => {
-      if (videoRef.current) {
-        videoRef.current.currentTime = 0;
-        videoRef.current.play().catch(() => {});
-      }
-    });
-  };
-
-  const exportCard = async () => {
-    if (!cardRef.current) return;
-
-    const canvas = await window.html2canvas(cardRef.current, {
-      scale: 2,
-      backgroundColor: null,
-      useCORS: true
-    });
-
-    const dataURL = canvas.toDataURL("image/png");
-
-    /* ✅ FIX: MOBILE SAFE DOWNLOAD */
-    const link = document.createElement("a");
-    link.href = dataURL;
-    link.download = `祝福卡-${name || "Friend"}-2026.png`;
-
-    if (/iPhone|iPad|Android/i.test(navigator.userAgent)) {
-      window.open(dataURL, "_blank");
-    } else {
-      link.click();
-    }
-  };
-
-  return (
-    <div className="w-full h-full text-white flex items-center justify-center">
-
-      {scene === "opening" && (
-        <div className="text-center space-y-6">
-          <h1 className="text-6xl font-bold">2026</h1>
-          <input
-            className="px-6 py-3 text-black rounded"
-            placeholder="Enter your name"
-            value={name}
-            onChange={e => setName(e.target.value)}
-          />
-          <button
-            onClick={startAction}
-            className="block mx-auto bg-orange-500 px-8 py-3 rounded text-white"
-          >
-            Unlock 2026
-          </button>
-        </div>
-      )}
-
-      {scene === "video" && (
-        <div className="fixed inset-0 bg-black z-50">
-          <video
-            ref={videoRef}
-            className="w-full h-full object-cover"
-            src={VIDEO_SRC}
-            playsInline
-            muted={videoMuted}
-            autoPlay
-            controls={false}
-            preload="none"
-            onEnded={() => setScene("result")}
-          />
-          <button
-            className="absolute top-6 right-6"
-            onClick={() => {
-              if (videoRef.current) {
-                videoRef.current.muted = !videoRef.current.muted;
-                setVideoMuted(videoRef.current.muted);
-              }
-            }}
-          >
-            <i className={`fa-solid ${videoMuted ? "fa-volume-xmark" : "fa-volume-high"}`}></i>
-          </button>
-        </div>
-      )}
-
-      {scene === "result" && (
-        <div className="text-center space-y-6">
-          <div
-            ref={cardRef}
-            className="bg-white text-black p-10 rounded-xl"
-          >
-            <h2 className="text-3xl font-bold">新年快乐，{name}</h2>
-            <p>愿 2026 光芒万丈</p>
-          </div>
-
-          <button
-            onClick={exportCard}
-            className="bg-white text-black px-8 py-3 rounded-full font-bold"
-          >
-            Save Card
-          </button>
-        </div>
-      )}
-    </div>
-  );
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "html2canvas": "https://esm.sh/html2canvas@^1.4.1"
+  }
 }
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // --- 1. Constants ---
+    const BG_MUSIC_URL = "https://raw.githubusercontent.com/caoxing7115/heart-animation/main/%E6%B5%86%E6%9E%9C.mp3";
+    // FIX: URL Encode the video filename to ensure mobile compatibility
+    const VIDEO_SRC = "12%E6%9C%8831%E6%97%A5.mp4"; 
+
+    const BLESSINGS = [
+      { cn: "万物更新，旧疾当愈，长安常安。", en: "Renewal for all, healing for old pains, lasting peace for you.", icon: "🌱" },
+      { cn: "往事清零，爱恨随意，迎接新光。", en: "Reset the past, let go of the mundane, embrace the new light.", icon: "✨" },
+      { cn: "祝你2026：眼里有星辰，心中有大海。", en: "2026: May stars light your eyes and the ocean fill your heart.", icon: "🌊" },
+      { cn: "岁岁常欢愉，年年皆胜意。", en: "Joy in every hour, victory in every year.", icon: "🍊" },
+      { cn: "凛冬散尽，星河长明，新年顺遂。", en: "Winter fades, the galaxy remains bright, all goes well.", icon: "🌌" },
+      { cn: "新的一年，奔赴山海，保持热爱。", en: "Heading for the mountains and seas, keep your fire burning.", icon: "🏔️" },
+      { cn: "愿新年，胜旧年，多喜乐，长安宁。", en: "May the new year excel the old, full of joy and tranquility.", icon: "🎊" },
+      { cn: "不期而遇，不言而喻，如期而至。", en: "Unexpected encounters, silent bonds, arriving on schedule.", icon: "⏳" },
+      { cn: "愿你此生尽兴，赤诚善良。", en: "May you live to the fullest, sincere and kind to the core.", icon: "❤️" },
+      { cn: "新的一年，要把开心放在第一位。", en: "In the coming year, prioritize your happiness above all.", icon: "🥳" },
+      { cn: "山高水长，愿你我顶峰相见。", en: "The peak awaits, may we meet there in triumph.", icon: "🚩" },
+      { cn: "所得皆所愿，所行皆坦途。", en: "All gains as desired, all paths smooth and free.", icon: "🛣️" },
+      { cn: "愿2026年的你，活得像光，灿烂夺目。", en: "In 2026, live like light—brilliant and dazzling.", icon: "☀️" },
+      { cn: "不负热爱，奔向未来。", en: "Live up to your passion, sprint toward the future.", icon: "⚡" },
+      { cn: "2026，开启无限可能。", en: "2026: Unlocking infinite possibilities within you.", icon: "🗝️" },
+      { cn: "烟火人间，岁岁年年。", en: "Amidst the earthly fireworks, year after year.", icon: "🎆" },
+      { cn: "跨过星河，迈向未来。", en: "Stride across the galaxy into a brand new future.", icon: "🛸" },
+      { cn: "生活明朗，万物可爱。", en: "Life is bright, and all things are endearing.", icon: "🐾" },
+      { cn: "愿新年：无忧无虑，所得皆愿。", en: "May your year be carefree, granting every wish.", icon: "🧸" },
+      { cn: "祝你：眼里有火，心中有光。", en: "Fire in your vision, light in your soul.", icon: "🔥" }
+    ];
+
+    // --- 2. Music Player Component ---
+    const MusicPlayer = ({ autoStart = false }) => {
+      const audioRef = useRef(null);
+      const [isPlaying, setIsPlaying] = useState(false);
+
+      const togglePlay = () => {
+        if (!audioRef.current) return;
+        if (isPlaying) {
+          audioRef.current.pause();
+        } else {
+          audioRef.current.play().catch(error => console.warn("Playback prevented:", error));
+        }
+        setIsPlaying(!isPlaying);
+      };
+
+      useEffect(() => {
+        if (autoStart && audioRef.current) {
+          audioRef.current.play()
+            .then(() => setIsPlaying(true))
+            .catch(() => setIsPlaying(false));
+        }
+
+        const enableAudio = () => {
+          if (audioRef.current && audioRef.current.paused) {
+            audioRef.current.play()
+              .then(() => setIsPlaying(true))
+              .catch(e => console.log("Interaction play failed", e));
+          }
+          document.removeEventListener('click', enableAudio);
+          document.removeEventListener('keydown', enableAudio);
+        };
+
+        document.addEventListener('click', enableAudio);
+        document.addEventListener('keydown', enableAudio);
+
+        return () => {
+          document.removeEventListener('click', enableAudio);
+          document.removeEventListener('keydown', enableAudio);
+        };
+      }, [autoStart]);
+
+      useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.volume = 0.5;
+            audioRef.current.loop = true;
+        }
+      }, []);
+
+      return (
+        <div className="fixed top-6 right-6 z-[100]">
+           <audio ref={audioRef} src={BG_MUSIC_URL} preload="auto" />
+           <button 
+            onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+            className={`
+              relative group flex items-center justify-center w-12 h-12 rounded-full 
+              backdrop-blur-md border border-white/20 shadow-[0_0_20px_rgba(0,0,0,0.5)]
+              transition-all duration-300 hover:scale-110 active:scale-95
+              ${isPlaying ? 'bg-orange-500/20 text-orange-400' : 'bg-white/5 text-white/60'}
+            `}
+            title={isPlaying ? "Pause Music" : "Play Music"}
+           >
+              {isPlaying && (
+                <span className="absolute inset-0 rounded-full animate-ping bg-orange-500/30 opacity-75"></span>
+              )}
+              <i className={`fa-solid ${isPlaying ? 'fa-music' : 'fa-play'} text-lg relative z-10`}></i>
+              {isPlaying && (
+                 <div className="absolute inset-0 rounded-full border-t-2 border-orange-400 animate-spin opacity-50"></div>
+              )}
+           </button>
+        </div>
+      );
+    };
+
+    // --- 3. Flip Digit Component ---
+    const FlipDigit = ({ value, label }) => {
+      const [prev, setPrev] = useState(value);
+      const [anim, setAnim] = useState(false);
+
+      useEffect(() => {
+        if (value !== prev) {
+          setAnim(true);
+          const t = setTimeout(() => {
+            setAnim(false);
+            setPrev(value);
+          }, 560);
+          return () => clearTimeout(t);
+        }
+      }, [value, prev]);
+
+      return (
+        <div className="flex flex-col items-center gap-2">
+          <div className={`relative w-[16vw] max-w-[120px] h-[22vw] max-h-[160px] bg-[#111] rounded-xl border border-white/10 shadow-2xl perspective-[1000px] overflow-hidden select-none ${anim ? "flip-anim" : ""}`}>
+             <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none z-10"></div>
+             <div className="absolute inset-0 flex flex-col font-mono text-white">
+                <div className="digit-top relative h-1/2 overflow-hidden bg-[#1a1a1a] border-b border-white/5 flex items-end justify-center">
+                   <span className="text-[12vw] sm:text-[80px] font-bold leading-none translate-y-[50%]">{anim ? prev : value}</span>
+                </div>
+                <div className="digit-bottom relative h-1/2 overflow-hidden bg-[#151515] flex items-start justify-center">
+                   <span className="text-[12vw] sm:text-[80px] font-bold leading-none translate-y-[-50%]">{anim ? value : prev}</span>
+                </div>
+             </div>
+          </div>
+          {label && <span className="text-xs uppercase tracking-widest text-white/40">{label}</span>}
+        </div>
+      );
+    };
+
+    // --- 4. Canvas Effects ---
+    const FireworkCanvas = ({ active }) => {
+      const cRef = useRef(null);
+
+      useEffect(() => {
+        const canvas = cRef.current;
+        if (!canvas || !active) return;
+        const ctx = canvas.getContext('2d');
+        if(!ctx) return;
+
+        let particles = [];
+        let animationFrameId;
+
+        const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+        resize();
+        window.addEventListener('resize', resize);
+
+        const colors = ['#ff4d00', '#ffd700', '#00ccff', '#ff0055', '#33ff00', '#ffffff'];
+
+        const loop = () => {
+          ctx.fillStyle = 'rgba(0,0,0,0.2)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          particles = particles.filter(p => p.alpha > 0.02);
+          
+          ctx.globalCompositeOperation = 'lighter';
+          
+          particles.forEach(p => {
+            p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.alpha -= 0.015;
+            ctx.globalAlpha = Math.max(0, p.alpha); 
+            ctx.fillStyle = p.color;
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+          });
+          
+          ctx.globalCompositeOperation = 'source-over';
+
+          if (Math.random() < 0.08) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height * 0.6;
+            for (let i = 0; i < 80; i++) {
+              const a = Math.random() * Math.PI * 2;
+              const s = Math.random() * 5 + 2; 
+              particles.push({ 
+                x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, alpha: 1, 
+                color: colors[Math.floor(Math.random() * colors.length)], 
+                size: 1.5 + Math.random() * 2 
+              });
+            }
+          }
+          animationFrameId = requestAnimationFrame(loop);
+        };
+        loop();
+
+        return () => {
+          window.removeEventListener('resize', resize);
+          cancelAnimationFrame(animationFrameId);
+        };
+      }, [active]);
+
+      return <canvas ref={cRef} className="fixed inset-0 pointer-events-none opacity-80" style={{ zIndex: 0 }} />;
+    };
+
+    const ConfettiCanvas = ({ active }) => {
+      const cRef = useRef(null);
+      useEffect(() => {
+        const canvas = cRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        let raf;
+        let pieces = [];
+        const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+        resize();
+        const colors = ['#ff4d00', '#ffd700', '#00ccff', '#ffffff', '#ff77aa', '#77ff66'];
+
+        const spawn = () => {
+          for (let i = 0; i < 150; i++) {
+            pieces.push({
+              x: Math.random() * canvas.width,
+              y: -20 - Math.random() * 200,
+              vx: (Math.random() - 0.5) * 6,
+              vy: 3 + Math.random() * 5,
+              rot: Math.random() * 360,
+              vr: (Math.random() - 0.5) * 15,
+              w: 8 + Math.random() * 10,
+              h: 10 + Math.random() * 12,
+              color: colors[Math.floor(Math.random() * colors.length)],
+              life: 0
+            });
+          }
+        };
+
+        const loop = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          pieces.forEach((p, i) => {
+            p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.rot += p.vr * 0.05; p.life++;
+            ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI / 180);
+            ctx.fillStyle = p.color; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            ctx.restore();
+            if (p.y > canvas.height + 50 || p.life > 600) pieces.splice(i, 1);
+          });
+          raf = requestAnimationFrame(loop);
+        };
+
+        if (active) { spawn(); loop(); window.addEventListener('resize', resize); }
+        else { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+        return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); pieces = []; };
+      }, [active]);
+      return <canvas ref={cRef} className={`fixed inset-0 pointer-events-none z-[100] ${active ? 'block' : 'hidden'}`} />;
+    };
+
+    // --- 5. Main App Component ---
+    function App() {
+      const [scene, setScene] = useState('opening');
+      const [name, setName] = useState('');
+      const [wish, setWish] = useState(null);
+      const [timeLeft, setTimeLeft] = useState({ d: '0', h: '00', m: '00', s: '00' });
+      const [videoMuted, setVideoMuted] = useState(true);
+      const [confettiOn, setConfettiOn] = useState(false);
+      const videoRef = useRef(null);
+      const cardRef = useRef(null);
+
+      useEffect(() => {
+        const tick = () => {
+          const target = new Date('2026-01-01T00:00:00');
+          const now = new Date();
+          const diff = target.getTime() - now.getTime();
+          if (diff <= 0) setTimeLeft({ d: '0', h: '00', m: '00', s: '00' });
+          else {
+            setTimeLeft({
+              d: String(Math.floor(diff / 86400000)),
+              h: String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0'),
+              m: String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0'),
+              s: String(Math.floor((diff % 60000) / 1000)).padStart(2, '0'),
+            });
+          }
+        };
+        tick();
+        const id = setInterval(tick, 1000);
+        return () => clearInterval(id);
+      }, []);
+
+      useEffect(() => {
+        const onKey = (e) => {
+          if (e.key === 'Enter' && scene === 'opening') startAction();
+          else if (e.key === 'Escape') resetApp();
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+      }, [scene, name]);
+
+      const startAction = () => {
+        if (!name.trim()) return;
+        const sel = BLESSINGS[Math.floor(Math.random() * BLESSINGS.length)];
+        setWish(sel);
+        setScene('video');
+        
+        // FIX: Play directly since element exists
+        if (videoRef.current) {
+          videoRef.current.currentTime = 0;
+          videoRef.current.play().catch(e => console.log("Video play failed:", e));
+        }
+      };
+
+      const onVideoEnd = () => {
+        setScene('result');
+        setConfettiOn(true);
+        setTimeout(() => setConfettiOn(false), 8000);
+      };
+
+      const resetApp = () => {
+        setScene('opening');
+        setConfettiOn(false);
+        setVideoMuted(true);
+      };
+
+      const exportCard = async () => {
+        if (!cardRef.current) return;
+        const canvas = await window.html2canvas(cardRef.current, { scale: 2, backgroundColor: null });
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = `祝福卡-${name || 'Friend'}-2026.png`;
+        a.click();
+      };
+
+      const shareCard = async () => {
+        if (navigator.share && cardRef.current) {
+          try {
+            const canvas = await window.html2canvas(cardRef.current, { scale: 2, backgroundColor: null });
+            canvas.toBlob(async (blob) => {
+              if (blob) {
+                const file = new File([blob], `祝福卡-${name || 'Friend'}-2026.png`, { type: blob.type });
+                try {
+                  await navigator.share({
+                    files: [file],
+                    title: '新年祝福',
+                    text: `给 ${name || '你'} 的专属新年签`,
+                  });
+                } catch (e) { console.warn("Share cancelled"); }
+              }
+            }, 'image/png');
+          } catch (err) { exportCard(); }
+        } else {
+          exportCard();
+        }
+      };
+
+      return (
+        <div className="w-full h-full relative text-white font-sans selection:bg-orange-500 selection:text-white overflow-hidden">
+          <div className="film-grain fixed inset-0 z-[60] pointer-events-none"></div>
+          <div className="fixed inset-0 bg-gradient-to-br from-[#0a142d] via-[#000000] to-[#060a14] -z-20"></div>
+          <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent -z-20"></div>
+          
+          <MusicPlayer autoStart={true} />
+          <FireworkCanvas active={scene === 'opening' || scene === 'result'} />
+          <ConfettiCanvas active={confettiOn} />
+
+          <div className="absolute inset-0 flex items-center justify-center p-4 z-10 w-full h-full">
+            
+            {/* SCENE: OPENING */}
+            {scene === 'opening' && (
+              <div className="w-full max-w-5xl flex flex-col items-center justify-center gap-10 animate-fade-in-up">
+                <h1 className="font-['Zhi_Mang_Xing'] text-[clamp(4rem,15vw,9rem)] leading-none text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-yellow-400 to-cyan-400 drop-shadow-[0_0_30px_rgba(255,100,0,0.4)] animate-float">
+                  2026
+                </h1>
+
+                <div className="w-full max-w-xl bg-white/5 backdrop-blur-xl border border-white/10 p-8 md:p-12 rounded-3xl shadow-[0_40px_80px_rgba(0,0,0,0.8)] flex flex-col items-center gap-8 relative overflow-hidden group hover:bg-white/10 transition-colors duration-500">
+                  <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+
+                  <div className="flex gap-4 md:gap-6 justify-center w-full">
+                    <FlipDigit value={timeLeft.h} label="Hours" />
+                    <FlipDigit value={timeLeft.m} label="Minutes" />
+                    <FlipDigit value={timeLeft.s} label="Seconds" />
+                  </div>
+
+                  <div className="text-center space-y-2">
+                    <p className="text-orange-400 font-mono text-sm tracking-[0.3em] uppercase opacity-80">Approaching The Future</p>
+                    <p className="text-xs text-white/30">{timeLeft.d} Days Remaining</p>
+                  </div>
+
+                  <div className="w-full space-y-4 relative z-10">
+                    <input 
+                      type="text" 
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      maxLength={10}
+                      placeholder="Enter your name..."
+                      className="w-full bg-black/30 border border-white/10 rounded-xl px-6 py-4 text-center text-lg placeholder:text-white/20 focus:outline-none focus:border-orange-500/50 focus:bg-black/50 transition-all font-bold"
+                    />
+                    <button 
+                      onClick={startAction}
+                      disabled={!name.trim()}
+                      className="w-full bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black tracking-widest uppercase py-4 rounded-xl shadow-[0_10px_20px_rgba(255,100,0,0.2)] hover:shadow-[0_15px_30px_rgba(255,100,0,0.4)] transform hover:-translate-y-1 transition-all duration-300"
+                    >
+                      Unlock 2026
+                    </button>
+                    <p className="text-[10px] text-center text-white/20">Press Enter to Start</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SCENE: VIDEO (PRE-RENDERED & HIDDEN) */}
+            {/* FIX: Video is always rendered to allow preloading, hidden via CSS */}
+            <div className={`fixed inset-0 z-50 bg-black flex items-center justify-center transition-all duration-700 ${scene === 'video' ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}>
+              
+              {/* Controls - Only clickable when active */}
+              {scene === 'video' && (
+                <div className="absolute top-8 right-8 z-[70] flex gap-4">
+                  <button 
+                    onClick={() => {
+                       if(videoRef.current) {
+                         videoRef.current.muted = !videoRef.current.muted;
+                         setVideoMuted(videoRef.current.muted);
+                       }
+                    }}
+                    className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center transition-all"
+                  >
+                    <i className={`fa-solid ${videoMuted ? 'fa-volume-xmark' : 'fa-volume-high'}`}></i>
+                  </button>
+                  <button 
+                    onClick={onVideoEnd}
+                    className="px-6 h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md font-bold uppercase tracking-wider text-xs flex items-center gap-2 transition-all hover:pr-4"
+                  >
+                    Skip <i className="fa-solid fa-forward"></i>
+                  </button>
+                </div>
+              )}
+
+              <video 
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                playsInline
+                webkit-playsinline="true"
+                x5-playsinline="true"
+                preload="auto"
+                muted={videoMuted}
+                onEnded={onVideoEnd}
+                onError={(e) => {
+                  console.error("Video error", e);
+                  // Optional: onVideoEnd() if critical failure
+                }}
+              >
+                {/* FIX: Use URL encoded filename */}
+                <source src={VIDEO_SRC} type="video/mp4" />
+                <div className="text-center">
+                  <p>Video loading failed or format unsupported.</p>
+                </div>
+              </video>
+            </div>
+
+            {/* SCENE: RESULT */}
+            {scene === 'result' && wish && (
+              <div className="flex flex-col items-center gap-8 w-full max-w-4xl animate-fade-in-up">
+                <div className="text-center relative">
+                   <div className="absolute left-1/2 -translate-x-1/2 -top-12 w-64 h-32 bg-orange-500/20 blur-[60px] rounded-full -z-10"></div>
+                   <h2 className="font-['Zhi_Mang_Xing'] text-[15vw] md:text-[8rem] leading-[0.8] text-transparent bg-clip-text bg-gradient-to-br from-orange-400 via-white to-blue-400 drop-shadow-2xl animate-float">
+                     2026
+                   </h2>
+                   <p className="text-white/40 tracking-[1em] text-xs uppercase mt-2">New Era Unlocked</p>
+                </div>
+
+                <div 
+                  ref={cardRef}
+                  className="relative w-full max-w-xl bg-black/40 backdrop-blur-xl border border-white/10 p-8 md:p-12 rounded-2xl shadow-2xl flex flex-col items-center gap-6 text-center"
+                >
+                  <div className="absolute top-4 left-4 w-16 h-16 border-t-2 border-l-2 border-white/10 rounded-tl-xl"></div>
+                  <div className="absolute top-4 right-4 w-16 h-16 border-t-2 border-r-2 border-white/10 rounded-tr-xl"></div>
+                  <div className="absolute bottom-4 left-4 w-16 h-16 border-b-2 border-l-2 border-white/10 rounded-bl-xl"></div>
+                  <div className="absolute bottom-4 right-4 w-16 h-16 border-b-2 border-r-2 border-white/10 rounded-br-xl"></div>
+
+                  <div className="text-8xl animate-bounce duration-[2000ms]">{wish.icon}</div>
+                  
+                  <div className="space-y-4 my-4">
+                    <p className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-orange-200 to-white bg-clip-text text-transparent px-4 leading-tight">
+                      {wish.cn}
+                    </p>
+                    <p className="text-lg md:text-xl text-white/60 font-serif italic font-light px-8">
+                      {wish.en}
+                    </p>
+                  </div>
+
+                  <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
+
+                  <div className="w-full flex justify-between items-end">
+                    <div className="text-left">
+                      <p className="text-[10px] text-orange-400 tracking-widest uppercase font-bold mb-1">To</p>
+                      <p className="text-2xl font-bold">{name || 'My Friend'}</p>
+                    </div>
+                    <div className="text-right">
+                       <p className="text-[10px] text-white/30 tracking-widest uppercase">Date</p>
+                       <p className="text-sm text-white/60 font-mono">01.01.2026</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 flex-wrap justify-center relative z-10">
+                  <button onClick={exportCard} className="bg-white text-black hover:bg-gray-200 px-8 py-3 rounded-full font-bold uppercase tracking-wider transition-all flex items-center gap-2">
+                    <i className="fa-solid fa-download"></i> Save Card
+                  </button>
+                  <button onClick={shareCard} className="bg-white/10 border border-white/10 hover:bg-white/20 px-8 py-3 rounded-full font-bold uppercase tracking-wider transition-all flex items-center gap-2">
+                    <i className="fa-solid fa-share-nodes"></i> Share
+                  </button>
+                  <button onClick={resetApp} className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all text-white/50 hover:text-white" title="Restart">
+                    <i className="fa-solid fa-rotate-left"></i>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
 </body>
 </html>
