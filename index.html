@@ -4,13 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 新年快乐 - 跨年盛典</title>
+    <title>2026 跨年盛典 - 动态笔触</title>
     
+    <!-- 加载核心样式与字体 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- 引入书法字体 Zhi Mang Xing 和艺术字体 Ma Shan Zheng -->
-    <link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@300;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&family=Noto+Sans+SC:wght@300;700&display=swap" rel="stylesheet">
     
+    <!-- 加载 React 生态（UMD 版本，无需构建） -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -23,74 +24,91 @@
             color: #ffffff;
             font-family: 'Noto Sans SC', sans-serif;
             overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* 艺术笔触字体效果 */
-        .brush-text-2026 {
+        /* 核心视觉：动态艺术笔触 2026 */
+        .art-brush-2026 {
             font-family: 'Zhi Mang Xing', cursive;
+            font-size: clamp(8rem, 25vw, 24rem);
+            position: relative;
             display: inline-block;
+            line-height: 0.85;
+            
+            /* 流动彩色油彩 */
             background: linear-gradient(
                 135deg, 
-                #ffcc33 0%, 
-                #ff6600 25%, 
-                #ff0033 50%, 
-                #3399ff 85%,
-                #ffcc33 100%
+                #ff0000 0%, 
+                #ffcc00 15%, 
+                #ff6600 30%, 
+                #00a2ff 50%, 
+                #ff0000 70%,
+                #ffcc00 100%
             );
-            background-size: 200% auto;
+            background-size: 300% 300%;
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            /* 模拟笔触的纹理感和厚重感 */
-            filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.8)) 
-                    drop-shadow(4px 4px 15px rgba(255, 69, 0, 0.4));
-            animation: shine 8s linear infinite;
-            line-height: 1.2;
-            padding-bottom: 20px;
+            
+            /* 关键：SVG 艺术滤镜叠加厚重阴影 */
+            filter: 
+                url(#brush-texture)
+                drop-shadow(4px 4px 0px rgba(0,0,0,0.8))
+                drop-shadow(0px 0px 35px rgba(255, 80, 0, 0.4));
+            
+            animation: 
+                color-flow 12s ease infinite,
+                gentle-float 6s ease-in-out infinite;
+            
+            padding: 20px 40px;
+            margin: -20px -40px;
+            z-index: 10;
         }
 
-        @keyframes shine {
-            to { background-position: 200% center; }
+        @keyframes color-flow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        .glass {
-            background: rgba(255, 255, 255, 0.02);
+        @keyframes gentle-float {
+            0%, 100% { transform: translateY(0) rotate(-0.5deg); }
+            50% { transform: translateY(-10px) rotate(0.5deg); }
+        }
+
+        /* 背景发光层 */
+        .brush-glow {
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            -webkit-text-stroke: 8px rgba(255, 100, 0, 0.1);
+            filter: blur(15px);
+            opacity: 0.5;
+        }
+
+        .glass-ui {
+            background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-radius: 2rem;
         }
 
-        .text-glow-gold {
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        .fade-entry {
+            animation: fadeIn 1.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         ::-webkit-scrollbar { display: none; }
-
-        /* 模拟图片中的“笔触”杂色细节 */
-        .brush-text-2026::after {
-            content: "2026";
-            position: absolute;
-            left: 0;
-            top: 0;
-            z-index: -1;
-            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.2));
-            -webkit-background-clip: text;
-            background-clip: text;
-            mix-blend-mode: overlay;
-        }
-
-        @keyframes pulse-custom {
-            0%, 100% { transform: scale(1); opacity: 0.9; }
-            50% { transform: scale(1.02); opacity: 1; }
-        }
-        .animate-art { animation: pulse-custom 5s ease-in-out infinite; }
     </style>
 <script type="importmap">
 {
   "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react/": "https://esm.sh/react@^19.2.3/",
     "vite": "https://esm.sh/vite@^7.3.0",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
   }
@@ -98,79 +116,116 @@
 </script>
 </head>
 <body>
+    <!-- SVG 滤镜：定义毛笔枯笔的质感 -->
+    <svg style="position: absolute; width: 0; height: 0;">
+        <filter id="brush-texture">
+            <!-- 增加随机噪点模拟纸张和笔触边缘 -->
+            <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" />
+            <!-- 稍微增强亮度 -->
+            <feComponentTransfer>
+                <feFuncA type="linear" slope="1.1" />
+            </feComponentTransfer>
+        </filter>
+    </svg>
+
     <div id="root"></div>
 
+    <!-- Babel 实时编译 JSX -->
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        const COLORS = ['#FFD700', '#FF4500', '#FF3131', '#00BFFF', '#7FFF00', '#FFFFFF'];
-
-        const FireworkCanvas = () => {
+        // --- 烟火系统 ---
+        const Fireworks = () => {
             const canvasRef = useRef(null);
             const particles = useRef([]);
-
-            const createParticles = (x, y) => {
-                const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-                for (let i = 0; i < 120; i++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const speed = Math.random() * 8 + 1;
-                    particles.current.push({
-                        x, y,
-                        vx: Math.cos(angle) * speed,
-                        vy: Math.sin(angle) * speed,
-                        color,
-                        alpha: 1,
-                        decay: Math.random() * 0.01 + 0.01,
-                        size: Math.random() * 3 + 0.5
-                    });
-                }
-            };
 
             useEffect(() => {
                 const canvas = canvasRef.current;
                 const ctx = canvas.getContext('2d');
-                let frame;
+                let animationId;
 
                 const resize = () => {
                     canvas.width = window.innerWidth;
                     canvas.height = window.innerHeight;
                 };
 
-                const render = () => {
+                const createPartice = (x, y, color) => {
+                    const count = 80;
+                    for (let i = 0; i < count; i++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const velocity = Math.random() * 6 + 2;
+                        particles.current.push({
+                            x, y,
+                            vx: Math.cos(angle) * velocity,
+                            vy: Math.sin(angle) * velocity,
+                            color,
+                            alpha: 1,
+                            life: Math.random() * 0.01 + 0.005
+                        });
+                    }
+                };
+
+                const update = () => {
                     ctx.fillStyle = 'rgba(5, 5, 5, 0.2)';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                    particles.current.forEach(p => {
+                    particles.current.forEach((p, i) => {
                         p.x += p.vx; p.y += p.vy;
-                        p.vy += 0.05; p.alpha -= p.decay;
+                        p.vy += 0.05; // 重力
+                        p.alpha -= p.life;
+                        
                         ctx.globalAlpha = p.alpha;
                         ctx.fillStyle = p.color;
                         ctx.beginPath();
-                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
                         ctx.fill();
                     });
 
                     particles.current = particles.current.filter(p => p.alpha > 0);
-                    if (Math.random() < 0.03) createParticles(Math.random() * canvas.width, Math.random() * canvas.height * 0.5);
-                    frame = requestAnimationFrame(render);
+                    
+                    if (Math.random() < 0.03) {
+                        const x = Math.random() * canvas.width;
+                        const y = Math.random() * canvas.height * 0.4;
+                        const colors = ['#ff0000', '#ffd700', '#ff8c00', '#00e1ff', '#ffffff'];
+                        createPartice(x, y, colors[Math.floor(Math.random() * colors.length)]);
+                    }
+
+                    animationId = requestAnimationFrame(update);
                 };
 
                 window.addEventListener('resize', resize);
-                resize(); render();
-                window.addEventListener('mousedown', (e) => createParticles(e.clientX, e.clientY));
-                return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(frame); };
+                resize();
+                update();
+
+                const handleClick = (e) => {
+                    const x = e.clientX || e.touches[0].clientX;
+                    const y = e.clientY || e.touches[0].clientY;
+                    createPartice(x, y, '#ffcc00');
+                };
+
+                window.addEventListener('mousedown', handleClick);
+                window.addEventListener('touchstart', handleClick);
+
+                return () => {
+                    window.removeEventListener('resize', resize);
+                    cancelAnimationFrame(animationId);
+                    window.removeEventListener('mousedown', handleClick);
+                    window.removeEventListener('touchstart', handleClick);
+                };
             }, []);
 
             return <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" />;
         };
 
+        // --- 倒计时 ---
         const Countdown = () => {
-            const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
+            const [time, setTime] = useState({ d: 0, h: 0, m: 0, s: 0 });
             useEffect(() => {
                 const timer = setInterval(() => {
                     const diff = new Date('2026-01-01T00:00:00').getTime() - Date.now();
-                    if (diff <= 0) return;
-                    setTimeLeft({
+                    if (diff <= 0) return clearInterval(timer);
+                    setTime({
                         d: Math.floor(diff / 86400000),
                         h: Math.floor((diff % 86400000) / 3600000),
                         m: Math.floor((diff % 3600000) / 60000),
@@ -181,77 +236,76 @@
             }, []);
 
             return (
-                <div className="flex justify-center mt-6 space-x-4">
-                    {Object.entries(timeLeft).map(([k, v]) => (
-                        <div key={k} className="flex flex-col items-center">
-                            <div className="glass w-14 h-16 sm:w-16 sm:h-20 flex items-center justify-center rounded-xl border border-white/10">
-                                <span className="text-xl sm:text-2xl font-bold text-yellow-500">{v.toString().padStart(2, '0')}</span>
-                            </div>
-                            <span className="text-[10px] uppercase mt-2 text-white/30 tracking-widest">{k}</span>
-                        </div>
-                    ))}
+                <div className="flex space-x-6 text-orange-500/80 font-bold tracking-widest text-sm sm:text-lg">
+                    <span>{time.d} 天</span>
+                    <span>{time.h} 时</span>
+                    <span>{time.m} 分</span>
+                    <span>{time.s} 秒</span>
                 </div>
             );
         };
 
+        // --- 主程序 ---
         const App = () => {
             const [name, setName] = useState('');
-            const [showWish, setShowWish] = useState(false);
+            const [submitted, setSubmitted] = useState(false);
 
             return (
-                <div className="relative min-h-screen flex flex-col items-center justify-center p-6 text-center">
-                    <FireworkCanvas />
+                <div className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden px-4">
+                    <Fireworks />
 
-                    <div className="relative z-10 w-full max-w-4xl">
-                        <div className="mb-2">
-                            <h2 className="text-yellow-600 font-bold tracking-[1em] text-xs sm:text-sm uppercase opacity-70">Happy New Year</h2>
-                            {/* 艺术笔触 2026 */}
-                            <div className="relative inline-block animate-art">
-                                <h1 className="text-[12rem] sm:text-[18rem] md:text-[22rem] brush-text-2026 select-none">
-                                    2026
-                                </h1>
-                            </div>
+                    <div className="relative z-10 flex flex-col items-center max-w-4xl w-full text-center">
+                        <div className="mb-[-1rem] sm:mb-[-3rem] fade-entry" style={{animationDelay: '0.2s'}}>
+                            <p className="text-white/30 text-[10px] sm:text-xs uppercase tracking-[1.5em] ml-4">Infinite Journey</p>
                         </div>
 
-                        {!showWish ? (
-                            <div className="flex flex-col items-center">
-                                <Countdown />
-                                <div className="mt-12 w-full max-w-md">
-                                    <form onSubmit={(e) => { e.preventDefault(); setShowWish(true); }} className="glass p-8 rounded-[2rem] space-y-6">
-                                        <input 
-                                            type="text" 
-                                            placeholder="输入您的名字以获得专属寄语" 
-                                            value={name}
-                                            onChange={(e) => setName(e.target.value)}
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center focus:outline-none focus:ring-1 focus:ring-yellow-500/50"
-                                        />
-                                        <button className="w-full bg-white text-black font-black py-4 rounded-xl hover:bg-yellow-500 transition-all uppercase tracking-widest text-sm">
-                                            点亮我的 2026
-                                        </button>
-                                    </form>
+                        <div className="relative fade-entry" style={{animationDelay: '0.4s'}}>
+                            <h1 className="art-brush-2026">2026</h1>
+                            <div className="brush-glow" aria-hidden="true">2026</div>
+                        </div>
+
+                        <div className="fade-entry" style={{animationDelay: '0.6s'}}>
+                            <Countdown />
+                        </div>
+
+                        <div className="mt-12 w-full max-w-sm fade-entry" style={{animationDelay: '0.8s'}}>
+                            {!submitted ? (
+                                <form 
+                                    onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }}
+                                    className="glass-ui p-8 flex flex-col space-y-5"
+                                >
+                                    <h2 className="text-lg font-bold tracking-widest text-white/80">迎接您的 2026</h2>
+                                    <input 
+                                        type="text" 
+                                        required
+                                        placeholder="输入您的姓名" 
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center focus:outline-none focus:ring-1 focus:ring-orange-500/50"
+                                    />
+                                    <button className="bg-gradient-to-r from-red-600 to-orange-500 text-white font-bold py-3 rounded-xl hover:scale-105 transition-transform active:scale-95">
+                                        生成新年寄语
+                                    </button>
+                                </form>
+                            ) : (
+                                <div className="glass-ui p-10 space-y-6 animate-in zoom-in duration-500">
+                                    <div className="text-orange-500 text-2xl"><i className="fa-solid fa-feather-pointed"></i></div>
+                                    <p className="text-xl sm:text-2xl font-bold leading-relaxed text-white/90">
+                                        “ {name}，<br/>
+                                        2026 年的宣纸已铺就，<br/>
+                                        愿你执笔如龙，<br/>
+                                        划破长空，自成一派。”
+                                    </p>
+                                    <button onClick={() => setSubmitted(false)} className="text-[10px] text-white/20 hover:text-white uppercase tracking-[0.5em] underline">
+                                        Back
+                                    </button>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="glass p-10 rounded-[2.5rem] w-full max-w-lg mx-auto space-y-6 animate-in fade-in zoom-in duration-500">
-                                <p className="text-2xl sm:text-3xl font-medium leading-relaxed italic">
-                                    " 亲爱的 {name || '朋友'}，<br/>
-                                    2026 是画卷，你是执笔者。<br/>
-                                    愿你每一笔，都绘出斑斓万象。"
-                                </p>
-                                <button onClick={() => setShowWish(false)} className="text-[10px] text-gray-500 hover:text-white tracking-[0.3em] uppercase underline">
-                                    重新开启
-                                </button>
-                            </div>
-                        )}
-                        
-                        <div className="fixed bottom-8 left-0 w-full text-white/20 text-[10px] tracking-[1em] uppercase">
-                            Visual art inspired by oil brush texture
+                            )}
                         </div>
                     </div>
 
-                    {/* 氛围灯效 */}
-                    <div className="fixed inset-0 pointer-events-none -z-10">
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-orange-900/5 blur-[150px] rounded-full" />
+                    <div className="fixed bottom-8 text-[9px] text-white/10 tracking-[1em] uppercase select-none pointer-events-none">
+                        Creative Generative Art • Happy New Year 2026
                     </div>
                 </div>
             );
