@@ -26,13 +26,34 @@
       margin: 0;
       background: radial-gradient(ellipse at 10% 10%, rgba(10,20,45,0.6), transparent 15%),
                   radial-gradient(ellipse at 90% 90%, rgba(6,10,20,0.45), transparent 15%),
-                  #000;
+                  linear-gradient(180deg, #000011 0%, #000 50%, #05020a 100%);
       color: var(--text-main);
       font-family: 'Noto Sans SC', sans-serif;
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
       overflow: hidden;
     }
+
+    /* animated background gradient (slow) */
+    .bg-animated {
+      position: fixed; inset: 0; z-index: -20;
+      background: linear-gradient(120deg, rgba(255,77,0,0.06), rgba(0,200,255,0.06), rgba(200,200,255,0.03));
+      background-size: 300% 300%;
+      animation: bgFlow 18s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes bgFlow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+    /* twinkling stars */
+    .stars {
+      position: fixed; inset: 0; z-index:-15; pointer-events:none;
+      background-image: radial-gradient(white 1px, transparent 1px);
+      background-size: 2px 2px;
+      opacity: 0.06;
+      filter: blur(0.6px);
+      animation: starsTwinkle 6s ease-in-out infinite;
+    }
+    @keyframes starsTwinkle { 0%{opacity:0.04} 50%{opacity:0.09} 100%{opacity:0.04} }
 
     /* film grain */
     .film-grain {
@@ -63,30 +84,34 @@
       border: 1px solid rgba(255,255,255,0.04);
       backdrop-filter: blur(18px) saturate(140%);
       box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+      transition: transform 300ms ease, box-shadow 300ms ease;
     }
+    .glass:active { transform: translateY(2px) scale(0.998); }
 
     .input-elegant{
       width:100%;
-      padding:16px 18px;
+      padding:14px 16px;
       background: rgba(255,255,255,0.03);
-      border-radius: 14px;
+      border-radius: 12px;
       border: 1px solid rgba(255,255,255,0.04);
       text-align:center;
       font-weight:700;
       font-size:1.05rem;
       color:var(--text-main);
+      transition: box-shadow 160ms ease, background 160ms ease;
     }
     .input-elegant:focus{ outline:none; box-shadow:0 0 26px rgba(255,77,0,0.12); border-color:var(--accent); background: rgba(255,255,255,0.06); }
 
     .btn-action {
       display:inline-flex; gap:10px; align-items:center; justify-content:center;
       background: linear-gradient(90deg,#ff4500,#ff8c00);
-      padding:12px 20px; border-radius:12px; font-weight:900; letter-spacing:0.25em; text-transform:uppercase;
+      padding:12px 20px; border-radius:12px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase;
       cursor:pointer; border: none; color:#fff;
+      transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+      box-shadow: 0 8px 30px rgba(255,77,0,0.12);
     }
-    .btn-icon {
-      background: rgba(255,255,255,0.08); padding:8px; border-radius:10px;
-    }
+    .btn-action:active{ transform: translateY(2px); }
+    .btn-action.btn-icon { padding:8px; border-radius:10px; background: rgba(255,255,255,0.06); color: #fff; box-shadow:none; }
 
     /* flip card */
     .flip-plate {
@@ -95,16 +120,17 @@
       user-select: none;
     }
     .flip-digit {
-      width: clamp(64px, 16vw, 140px);
-      height: clamp(84px, 22vw, 180px);
-      border-radius: 14px;
+      min-width: 72px; width: clamp(64px, 16vw, 110px);
+      height: clamp(84px, 22vw, 140px);
+      border-radius: 12px;
       position: relative;
-      background: linear-gradient(180deg,#111,#070707);
+      background: linear-gradient(180deg,#0f1720,#070707);
       border: 1px solid rgba(255,255,255,0.04);
       box-shadow: 0 18px 40px rgba(0,0,0,0.8), inset 0 6px 12px rgba(255,255,255,0.02);
-      display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono', monospace; font-size: clamp(2.2rem, 8.5vw, 6rem); font-weight:800; color:var(--text-main);
+      display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono', monospace; font-size: clamp(1.6rem, 6vw, 3rem); font-weight:800; color:var(--text-main);
       overflow: hidden;
     }
+    .sep-dot { font-size:1.35rem; margin: 0 6px; opacity:0.8; }
 
     /* flipping animation: we create front/back panels */
     .digit-inner { position: absolute; inset: 0; display:flex; flex-direction:column; }
@@ -120,14 +146,23 @@
     /* result title splash */
     .result-2026 {
       font-family: 'Zhi Mang Xing', cursive;
-      font-size: clamp(4rem, 20vw, 16rem);
+      font-size: clamp(4rem, 20vw, 14rem);
       background: linear-gradient(165deg,#ff3a00 0%, #ffd700 30%, #1e90ff 80%);
       -webkit-background-clip:text; background-clip:text; color:transparent;
       filter: url(#ultra-oil-brush) drop-shadow(0 12px 36px rgba(0,0,0,0.6));
       animation: colorFlow 10s linear infinite;
       line-height:0.85;
+      transition: transform 300ms ease;
     }
     @keyframes colorFlow { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
+
+    /* music control bar */
+    .music-bar {
+      display:flex; gap:8px; align-items:center; padding:8px 10px; border-radius:999px;
+      background: rgba(0,0,0,0.35); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+    .music-slider { width:120px; }
 
     /* small helpers */
     .sr-only{ position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden; }
@@ -139,6 +174,7 @@
     @media (max-width:640px){
       .glass { padding: 18px; border-radius: 16px; }
       .opening-2026 { font-size: 96px; }
+      .music-slider { width: 90px; }
     }
   </style>
 
@@ -155,12 +191,18 @@
 </head>
 
 <body>
+  <div class="bg-animated" aria-hidden="true"></div>
+  <div class="stars" aria-hidden="true"></div>
   <div class="film-grain" aria-hidden="true"></div>
 
   <div id="root" class="h-full w-full"></div>
 
   <script type="text/babel">
   const { useState, useEffect, useRef } = React;
+
+  // Background music raw URL on GitHub (raw.githubusercontent.com)
+  // If you move the file, update this URL accordingly.
+  const BGM_URL = "https://raw.githubusercontent.com/caoxing7115/heart-animation/main/%E6%B5%86%E6%9E%9C.mp3";
 
   const BLESSINGS = [
     { cn: "万物更新，旧疾当愈，长安常安。", en: "Renewal for all, healing for old pains, lasting peace for you.", icon: "🌱" },
@@ -196,13 +238,13 @@
         const t = setTimeout(() => { setAnim(false); setPrev(value); }, 560);
         return () => clearTimeout(t);
       }
-    }, [value]);
+    }, [value, prev]);
 
     return (
       <div className={"flip-digit " + (anim ? "flip-anim" : "")} aria-hidden>
         <div className="digit-inner">
-          <div className="digit-top">{anim ? prev : value}</div>
-          <div className="digit-bottom">{anim ? value : prev}</div>
+          <div className="digit-top" aria-hidden>{anim ? prev : value}</div>
+          <div className="digit-bottom" aria-hidden>{anim ? value : prev}</div>
         </div>
       </div>
     );
@@ -218,6 +260,7 @@
       let particles = [];
       const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
       resize();
+      let rafId = null;
       const loop = () => {
         ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(0,0,canvas.width,canvas.height);
         particles = particles.filter(p => p.alpha > 0.02);
@@ -234,11 +277,11 @@
             particles.push({ x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,alpha:0.9,color:colors[Math.floor(Math.random()*colors.length)],size:1+Math.random()*2 });
           }
         }
-        requestAnimationFrame(loop);
+        rafId = requestAnimationFrame(loop);
       };
       window.addEventListener('resize', resize);
       loop();
-      return () => window.removeEventListener('resize', resize);
+      return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(rafId); };
     }, [active]);
     return <canvas ref={cRef} className="fixed inset-0 -z-10 pointer-events-none" aria-hidden />;
   }
@@ -293,14 +336,17 @@
     const [wish, setWish] = useState(null);
     const [timeLeft, setTimeLeft] = useState({ d:'0', h:'00', m:'00', s:'00' });
     const [videoMuted, setVideoMuted] = useState(true);
+    const [bgmPlaying, setBgmPlaying] = useState(false);
+    const [bgmVolume, setBgmVolume] = useState(0.48);
     const videoRef = useRef(null);
+    const audioRef = useRef(null);
     const cardRef = useRef(null);
     const [confettiOn, setConfettiOn] = useState(false);
 
     useEffect(() => {
-      // countdown
+      // countdown - ensure using explicit date string (local timezone)
+      const target = new Date('2026-01-01T00:00:00');
       const tick = () => {
-        const target = new Date('2026-01-01T00:00:00');
         const diff = target - new Date();
         if (diff <= 0) {
           setTimeLeft({ d:'0', h:'00', m:'00', s:'00' });
@@ -318,32 +364,82 @@
       return () => clearInterval(id);
     }, []);
 
-    useEffect(() => { // keyboard: Enter triggers
+    useEffect(() => {
+      // sync video muted state when changed
+      if (videoRef.current) videoRef.current.muted = !!videoMuted;
+    }, [videoMuted]);
+
+    useEffect(() => {
+      if (audioRef.current) audioRef.current.volume = bgmVolume;
+    }, [bgmVolume]);
+
+    useEffect(() => { // keyboard shortcuts
       const onKey = (e) => {
         if (e.key === 'Enter') {
           if (scene === 'opening') startAction();
         } else if (e.key === 'Escape') {
           setScene('opening');
+        } else if (e.key === 'm' || e.key === 'M') {
+          toggleBgm();
         }
       };
       window.addEventListener('keydown', onKey);
       return () => window.removeEventListener('keydown', onKey);
-    }, [scene, name]);
+    }, [scene, name, bgmPlaying]);
+
+    // attempt to play bgm; browsers may block autoplay until user interacts
+    async function tryPlayBgm() {
+      if (!audioRef.current) return;
+      try {
+        await audioRef.current.play();
+        setBgmPlaying(true);
+      } catch (err) {
+        // autoplay blocked — will play on explicit user interaction
+        setBgmPlaying(false);
+      }
+    }
+
+    function toggleBgm() {
+      if (!audioRef.current) return;
+      if (bgmPlaying) {
+        audioRef.current.pause();
+        setBgmPlaying(false);
+      } else {
+        audioRef.current.play().then(()=>setBgmPlaying(true)).catch(()=>setBgmPlaying(false));
+      }
+    }
 
     function startAction(){
-      if (!name.trim()) return; // keep simple
+      if (!name.trim()) {
+        // gentle shake effect on the input
+        const el = document.getElementById('nameInput');
+        if (el) {
+          el.animate([{ transform: 'translateX(-6px)' },{ transform: 'translateX(6px)' },{ transform: 'translateX(0px)' }], { duration: 300 });
+          el.focus();
+        }
+        return;
+      }
       const sel = BLESSINGS[Math.floor(Math.random()*BLESSINGS.length)];
       setWish(sel);
       setScene('video');
+
+      // try to play bgm and video (safe to call; browser will require interaction)
+      tryPlayBgm();
       setTimeout(()=> {
         try { videoRef.current && videoRef.current.play(); } catch(e){}
-      }, 100);
+      }, 120);
     }
 
     function onVideoEnd(){
       setScene('result');
       setConfettiOn(true);
-      // stop confetti after ~7s
+      setTimeout(()=>setConfettiOn(false),7000);
+    }
+
+    function skipToResult(){
+      if (videoRef.current) { try { videoRef.current.pause(); } catch(e){} }
+      setScene('result');
+      setConfettiOn(true);
       setTimeout(()=>setConfettiOn(false),7000);
     }
 
@@ -353,7 +449,7 @@
       const canvas = await html2canvas(cardRef.current, { scale: 2, backgroundColor: null });
       const a = document.createElement('a');
       a.href = canvas.toDataURL('image/png');
-      a.download = `祝福卡-${name || 'Friend'}-2026.png`;
+      a.download = `祝福卡-${(name || 'Friend')}-2026.png`;
       a.click();
     }
 
@@ -375,18 +471,47 @@
       }
     }
 
+    // parallax for card and title
+    useEffect(()=> {
+      const onMove = (e) => {
+        const x = (e.clientX / window.innerWidth - 0.5) * 20;
+        const y = (e.clientY / window.innerHeight - 0.5) * 10;
+        const title = document.querySelector('.result-2026');
+        if (title) title.style.transform = `translate3d(${x/2}px,${y/2}px,0) rotate(${x/60}deg)`;
+        if (cardRef.current) cardRef.current.style.transform = `translate3d(${x/8}px,${y/8}px,0)`;
+      };
+      window.addEventListener('mousemove', onMove);
+      return ()=>window.removeEventListener('mousemove', onMove);
+    }, []);
+
     return (
       <div className="w-full h-full relative">
         <FireworkCanvas active={scene === 'opening' || scene === 'result'} />
+        <audio ref={audioRef} src={BGM_URL} loop crossOrigin="anonymous" playsInline preload="auto" />
+        <div className="absolute top-4 right-4 z-60 flex gap-3 items-center">
+          <div className="music-bar" role="toolbar" aria-label="背景音乐控制">
+            <button className="btn-action btn-icon" onClick={() => { toggleBgm(); }} title="播放 / 暂停背景音乐" aria-pressed={bgmPlaying}>
+              <i className={"fa " + (bgmPlaying ? "fa-pause" : "fa-play")}></i>
+            </button>
+            <div className="small-note muted">BGM</div>
+            <input className="music-slider" type="range" min="0" max="1" step="0.01" value={bgmVolume} onChange={(e)=>{ setBgmVolume(Number(e.target.value)); if (audioRef.current) audioRef.current.volume = Number(e.target.value); }} aria-label="背景音乐音量" />
+            <button className="btn-action btn-icon" onClick={()=>{ setBgmVolume(v=>{ const nv = v>0 ? 0 : 0.48; if (audioRef.current) audioRef.current.volume = nv; return nv; }); }} title="静音/取消静音">
+              <i className={"fa " + (bgmVolume===0 ? "fa-volume-xmark" : "fa-volume-high")}></i>
+            </button>
+          </div>
+        </div>
+
         <div className="absolute inset-0 flex items-center justify-center p-6">
           {scene === 'opening' && (
-            <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center gap-8">
+            <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center gap-6">
               <h1 className="opening-2026 text-center" style={{ fontSize: 'clamp(48px, 14vw, 120px)' }}>2026</h1>
 
               <div className="flex flex-col items-center glass">
                 <div className="flip-plate mb-4" role="timer" aria-live="polite" aria-atomic="true">
                   <FlipDigit value={timeLeft.h} />
+                  <div className="sep-dot">:</div>
                   <FlipDigit value={timeLeft.m} />
+                  <div className="sep-dot">:</div>
                   <FlipDigit value={timeLeft.s} />
                 </div>
 
@@ -397,14 +522,22 @@
                   <input id="nameInput" className="input-elegant mb-4" placeholder="在此输入您的姓名（最多10字）" maxLength={10}
                     value={name} onChange={(e)=>setName(e.target.value)} aria-label="输入姓名用于定制祝福" />
                   <div className="flex gap-3">
-                    <button className="btn-action flex-1" onClick={startAction} aria-label="开启新年寄语">
+                    <button className="btn-action flex-1" onClick={() => { startAction(); }} aria-label="开启新年寄语">
                       <span>开启新年寄语</span>
                     </button>
-                    <button className="btn-action btn-icon" onClick={()=>{ setVideoMuted(v=>!v); setVideoMuted((v)=>!v); }} aria-pressed={videoMuted} title="切换静音">
+
+                    <button className="btn-action btn-icon" onClick={()=>{
+                      // toggle videoMuted state and keep videoRef in sync
+                      setVideoMuted(v => {
+                        const nv = !v;
+                        if (videoRef.current) videoRef.current.muted = nv;
+                        return nv;
+                      });
+                    }} aria-pressed={videoMuted} title="切换视频静音">
                       <i className={"fa "+ (videoMuted ? "fa-volume-xmark" : "fa-volume-high")}></i>
                     </button>
                   </div>
-                  <div className="mt-3 small-note text-center">按 Enter 快速启动 • Esc 返回</div>
+                  <div className="mt-3 small-note text-center">按 Enter 快速启动 • Esc 返回 • M 切换音乐</div>
                 </div>
               </div>
               <div className="text-xs text-white/30 uppercase tracking-widest">Art Direction • Happy New Year 2026</div>
@@ -415,25 +548,21 @@
             <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
               <div className="absolute top-4 right-4 z-60 flex gap-2">
                 <button className="btn-action btn-icon" onClick={()=>{
-                  if (videoRef.current) {
-                    videoRef.current.muted = !videoRef.current.muted;
-                    setVideoMuted(videoRef.current.muted);
-                  }
+                  setVideoMuted(v => {
+                    const nv = !v;
+                    if (videoRef.current) videoRef.current.muted = nv;
+                    return nv;
+                  });
                 }} aria-pressed={videoMuted} title="静音/取消静音">
                   <i className={"fa " + (videoMuted ? "fa-volume-xmark":"fa-volume-high")}></i>
                 </button>
-                <button className="btn-action btn-icon" onClick={()=>{
-                  // allow user to skip the video
-                  if (videoRef.current) { videoRef.current.pause(); }
-                  setScene('result');
-                  setConfettiOn(true);
-                  setTimeout(()=>setConfettiOn(false),7000);
-                }} title="跳过">
+                <button className="btn-action btn-icon" onClick={()=>{ skipToResult(); }} title="跳过">
                   <i className="fa fa-forward"></i>
                 </button>
               </div>
 
               <video ref={videoRef} className="w-full h-full object-cover" playsInline autoPlay muted={videoMuted} onEnded={onVideoEnd}>
+                <!-- 如果你有自制的视频，把文件名或路径替换到这里 -->
                 <source src="12月31日.mp4" type="video/mp4" />
                 您的浏览器不支持 video 标签。
               </video>
@@ -459,7 +588,7 @@
                   <div className="flex gap-3 items-center">
                     <button className="btn-action" onClick={exportCard} title="下载祝福卡为图片">下载</button>
                     <button className="btn-action" onClick={shareCard} title="分享祝福卡">分享</button>
-                    <button className="btn-action btn-icon" onClick={()=>setScene('opening')} title="重置">
+                    <button className="btn-action btn-icon" onClick={()=>{ setScene('opening'); setWish(null); }} title="重置">
                       <i className="fa fa-rotate-left"></i>
                     </button>
                   </div>
