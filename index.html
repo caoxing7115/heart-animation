@@ -118,6 +118,8 @@
 
     // --- 1. Constants ---
     const BG_MUSIC_URL = "https://raw.githubusercontent.com/caoxing7115/heart-animation/main/%E6%B5%86%E6%9E%9C.mp3";
+    // FIX: URL Encode the video filename to ensure mobile compatibility
+    const VIDEO_SRC = "12%E6%9C%8831%E6%97%A5.mp4"; 
 
     const BLESSINGS = [
       { cn: "万物更新，旧疾当愈，长安常安。", en: "Renewal for all, healing for old pains, lasting peace for you.", icon: "🌱" },
@@ -406,12 +408,12 @@
         const sel = BLESSINGS[Math.floor(Math.random() * BLESSINGS.length)];
         setWish(sel);
         setScene('video');
-        setTimeout(() => {
-          if (videoRef.current) {
-            videoRef.current.currentTime = 0;
-            videoRef.current.play().catch(e => console.log("Video play failed:", e));
-          }
-        }, 100);
+        
+        // FIX: Play directly since element exists
+        if (videoRef.current) {
+          videoRef.current.currentTime = 0;
+          videoRef.current.play().catch(e => console.log("Video play failed:", e));
+        }
       };
 
       const onVideoEnd = () => {
@@ -426,10 +428,8 @@
         setVideoMuted(true);
       };
 
-      // FIX: Use the specific download logic requested
       const exportCard = async () => {
         if (!cardRef.current) return;
-        // Directly use html2canvas as requested by user
         const canvas = await window.html2canvas(cardRef.current, { scale: 2, backgroundColor: null });
         const a = document.createElement('a');
         a.href = canvas.toDataURL('image/png');
@@ -440,7 +440,6 @@
       const shareCard = async () => {
         if (navigator.share && cardRef.current) {
           try {
-            // Updated to match the successful export config style
             const canvas = await window.html2canvas(cardRef.current, { scale: 2, backgroundColor: null });
             canvas.toBlob(async (blob) => {
               if (blob) {
@@ -515,9 +514,12 @@
               </div>
             )}
 
-            {/* SCENE: VIDEO */}
-            {scene === 'video' && (
-              <div className="fixed inset-0 z-50 bg-black flex items-center justify-center animate-fade-in-up">
+            {/* SCENE: VIDEO (PRE-RENDERED & HIDDEN) */}
+            {/* FIX: Video is always rendered to allow preloading, hidden via CSS */}
+            <div className={`fixed inset-0 z-50 bg-black flex items-center justify-center transition-all duration-700 ${scene === 'video' ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}>
+              
+              {/* Controls - Only clickable when active */}
+              {scene === 'video' && (
                 <div className="absolute top-8 right-8 z-[70] flex gap-4">
                   <button 
                     onClick={() => {
@@ -537,26 +539,29 @@
                     Skip <i className="fa-solid fa-forward"></i>
                   </button>
                 </div>
+              )}
 
-                <video 
-                  ref={videoRef}
-                  className="w-full h-full object-cover"
-                  playsInline
-                  muted={videoMuted}
-                  onEnded={onVideoEnd}
-                  onError={(e) => {
-                    console.error("Video error, skipping", e);
-                    onVideoEnd();
-                  }}
-                >
-                  <source src="12月31日.mp4" type="video/mp4" />
-                  <div className="text-center">
-                    <p>Video loading failed or format unsupported.</p>
-                    <button onClick={onVideoEnd} className="mt-4 underline">Continue to Result</button>
-                  </div>
-                </video>
-              </div>
-            )}
+              <video 
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                playsInline
+                webkit-playsinline="true"
+                x5-playsinline="true"
+                preload="auto"
+                muted={videoMuted}
+                onEnded={onVideoEnd}
+                onError={(e) => {
+                  console.error("Video error", e);
+                  // Optional: onVideoEnd() if critical failure
+                }}
+              >
+                {/* FIX: Use URL encoded filename */}
+                <source src={VIDEO_SRC} type="video/mp4" />
+                <div className="text-center">
+                  <p>Video loading failed or format unsupported.</p>
+                </div>
+              </video>
+            </div>
 
             {/* SCENE: RESULT */}
             {scene === 'result' && wish && (
