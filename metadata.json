@@ -1,0 +1,9 @@
+
+{
+  "name": "2026 跨年盛典",
+  "description": "一个沉浸式的 2026 新年倒计时与庆祝应用，包含交互式烟火、动态 AI 祝福语及电影感视觉体验。",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
